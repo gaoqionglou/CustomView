@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/activity_bezier"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:paddingBottom="@dimen/activity_vertical_margin"
+    android:paddingLeft="@dimen/activity_horizontal_margin"
+    android:paddingRight="@dimen/activity_horizontal_margin"
+    android:paddingTop="@dimen/activity_vertical_margin"
+    tools:context="com.gaoql.BezierActivity">
+<com.gaoql.customview.BezierView
+    android:id="@+id/bezierview"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent" />
+    <RadioGroup
+        android:id="@+id/radiogroup"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:orientation="horizontal"
+        android:gravity="center_horizontal"
+        android:background="@color/colorPrimary"
+        android:padding="@dimen/activity_vertical_margin"
+        >
+     <RadioButton
+         android:id="@+id/rd1"
+         android:layout_width="wrap_content"
+         android:layout_height="match_parent"
+         android:text="P1"
+         android:textSize="50px"
+         android:layout_marginRight="50dp"
+         />
+        <RadioButton
+            android:id="@+id/rd2"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:text="P2"
+            android:textSize="50px"
+            android:layout_marginLeft="50dp"/>
+
+    </RadioGroup>
+</RelativeLayout>

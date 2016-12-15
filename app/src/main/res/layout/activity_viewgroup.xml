@@ -1,0 +1,27 @@
+<com.gaoql.customview.CustomViewGroup xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/customviewgroup"
+    android:layout_width="match_parent"
+    android:layout_height="200dp"
+    android:background="#123123" >
+
+  <com.gaoql.customview.CircleButton
+      android:id="@+id/btn1"
+      android:layout_margin="10dp"
+      android:layout_width="wrap_content"
+      android:layout_height="wrap_content"
+      />
+    <com.gaoql.customview.CircleButton
+        android:id="@+id/btn2"
+        android:layout_margin="10dp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        />
+    <com.gaoql.customview.CircleButton
+        android:id="@+id/btn3"
+        android:layout_margin="10dp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        />
+
+
+</com.gaoql.customview.CustomViewGroup>
