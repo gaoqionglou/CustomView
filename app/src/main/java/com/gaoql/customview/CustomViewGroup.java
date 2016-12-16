@@ -27,30 +27,44 @@ import java.util.List;
 
 public class CustomViewGroup extends ViewGroup {
     public static final String TAG="GAOVG-CustomViewGroup";
-    private static final float C = 0.551915024494f;     // 一个常量，用来计算绘制圆形贝塞尔曲线控制点的位置
+    /** 一个常量，用来计算绘制圆形贝塞尔曲线控制点的位置*/
+    private static final float C = 0.551915024494f;
     private float radius=20;
-    private float diff = radius*C;        // 圆形的控制点与数据点的差值
+    /** 圆形的控制点与数据点的差值*/
+    private float diff = radius*C;
+    /**触碰圆的第一次初始化的中心坐标 */
     private float firstCenterX,firstCenterY;
     private Paint linePaint;
     private Paint paint;
     private Path path ;
+    /** 圆的4个点 */
     private PointF[] dataPoint = new PointF[4];
+    /** 触碰圆的第一次初始化的4个点 */
     private PointF[] firstDataPoint = new PointF[4];
+    /** 贝塞尔曲线的8个控制点，和dataPoint有关 */
     private PointF[] ctrlPoint = new PointF[8];
-
-    public static final int STATE_START = 0;
-    public static final int STATE_MOVING = 1;
-    public static final int STATE_STOP = 2;
-    private float kx,ky ;
-
-
-    float ex;
-    float ey;
-    LimitQueue<PointF> pointLimitQueue = new LimitQueue<>(100);
-    private float mInterpolatedTime=0f;//0-1的播放时间
+    /** 简单的平移动画类*/
     private TranslteAnimaton move = new TranslteAnimaton();
-    private int state = -1;
-private Handler handler = new Handler() {
+    /** 动画未开始状态*/
+    public static final int STATE_UNSTART = -1;
+    /** 动画开始状态*/
+    public static final int STATE_START = 0;
+    /** 动画进行状态*/
+    public static final int STATE_MOVING = 1;
+    /** 动画结束状态 */
+    public static final int STATE_STOP = 2;
+    /** 动画状态 */
+    private int state = STATE_UNSTART;
+    /** 动画播放时间 范围在[0,1] */
+    private float mInterpolatedTime=0f;//0-1的播放时间
+    /** 圆的平移过程x,y的斜率 */
+    private float kx,ky ;
+    /** 触摸坐标 */
+    private float ex,ey;
+    /** 保存坐标点的队列 */
+    private LimitQueue<PointF> pointLimitQueue = new LimitQueue<>(100);
+    /** handler定时执行动画->重绘*/
+    private Handler handler = new Handler() {
     @Override
     public void handleMessage(Message msg) {
         super.handleMessage(msg);
@@ -58,7 +72,9 @@ private Handler handler = new Handler() {
             case 0:
                 // 移除所有的msg.what为0等消息，保证只有一个循环消息队列再跑
                 handler.removeMessages(0);
-                if(state !=STATE_START&&pointLimitQueue.size()>1) startTranslteAnimaton();
+                if(state !=STATE_START&&pointLimitQueue.size()>1) {
+                    startTranslteAnimaton();
+                }
                 // 再次发出msg，循环更新
                 handler.sendEmptyMessageDelayed(0, 1000);
                 break;
@@ -195,6 +211,9 @@ private Handler handler = new Handler() {
 
     }
 
+    /**
+     * 初始化
+     */
     private void initData(){
 /*      应该不用这里做
         dataPoint = initDataPoint(firstCenterX,firstCenterY);
@@ -204,12 +223,23 @@ private Handler handler = new Handler() {
         paint = new Paint();
         path = new Path();
     }
+    /** 初始化起始位置的中心点 */
     private void initCenterPoint(float x,float y){
         firstCenterY = y;
         firstCenterX = x;
     }
 
-    private PointF[] initDataPoint(float d ,float centerX,float centerY,float bendingDistance){
+    /**
+     * TODO: 因为X轴涉及到形变，Y要随X轴的形变而变化，难!!
+     * 描绘圆的4个点.由动画行进时间决定
+     * @param kx 开始位置到结束位置 平移过程中圆形的中心点x坐标的一次函数的斜率
+     * @param ky 开始位置到束位置 平移过程中圆形的中心点y坐标的一次函数的斜率
+     * @param centerX 中心点x
+     * @param centerY 中心点y
+     * @param bendingDistance 弹性圆的拉伸长度
+     * @return
+     */
+    private PointF[] initDataPoint(float kx ,float ky,float centerX,float centerY,float bendingDistance){
         for(int i=0;i<dataPoint.length;i++){
             if(dataPoint[i]==null) {
                 dataPoint[i] = new PointF(0, 0);
@@ -277,7 +307,7 @@ private Handler handler = new Handler() {
 
 
             if(isRight){
-                float finalX_3= firstCenterX+d*s2;
+                float finalX_3= firstCenterX+kx*s2;
                 float kMiddle_3 = (finalX_3-firstDataPoint[1].x)/(s2-s1);
                 float bMiddle_3 = firstDataPoint[1].x-(finalX_3-firstDataPoint[1].x)*s1/(s2-s1);
                 float d2_3 = firstDataPoint[2].x+bendingDistance;
@@ -286,6 +316,15 @@ private Handler handler = new Handler() {
                 float b0_3 = firstDataPoint[0].x-(finalX_3-radius-d0_3)*s1/(s2-s1);
                 float k2_3 = (finalX_3+radius- d2_3)/(s2-s1);
                 float b2_3 = d2_3 - s1*(finalX_3+radius-d2_3)/(s2-s1);
+
+//                float finalY_3 = firstCenterY+ky*s2;
+//                float kMiddleY_3= (finalY_3-firstDataPoint[0].y)/(s2-s1);
+//                float bMiddleY_3= firstDataPoint[0].y-(finalY_3-firstDataPoint[0].y)*s1/(s2-s1);
+//                float k1_Y_3= (finalY_3-radius - firstDataPoint[1].y)/(s2-s1);
+//                float b1_Y_3= firstDataPoint[1].y-(finalY_3-radius - firstDataPoint[1].y)*s1/(s2-s1);
+//                float k3_Y_3=(finalY_3+radius - firstDataPoint[2].y)/(s2-s1);
+//                float b3_Y_3= firstDataPoint[2].y-(finalY_3+radius - firstDataPoint[2].y)*s1/(s2-s1);
+
                 dataPoint[0].x= k0_3*mInterpolatedTime+b0_3;
                 dataPoint[0].y = centerY;
                 dataPoint[1].x = kMiddle_3*mInterpolatedTime+bMiddle_3;
@@ -295,7 +334,7 @@ private Handler handler = new Handler() {
                 dataPoint[3].x = kMiddle_3*mInterpolatedTime+bMiddle_3;
                 dataPoint[3].y = centerY+radius;
             }else{
-                float finalX_3= firstCenterX+d*s2;
+                float finalX_3= firstCenterX+kx*s2;
                 float kMiddle_3 = (finalX_3-firstDataPoint[1].x)/(s2-s1);
                 float bMiddle_3 = firstDataPoint[1].x-(finalX_3-firstDataPoint[1].x)*s1/(s2-s1);
                 float d0_3 = firstDataPoint[0].x+bendingDistance;
@@ -304,6 +343,15 @@ private Handler handler = new Handler() {
                 float b0_3 = d0_3-(finalX_3-radius-d0_3)*s1/(s2-s1);
                 float k2_3 = (finalX_3+radius-d2_3)/(s2-s1);
                 float b2_3 = firstDataPoint[2].x - s1*(finalX_3+radius-d2_3)/(s2-s1);
+
+//                float finalY_3 = firstCenterY+ky*s2;
+//                float kMiddleY_3= (finalY_3-firstDataPoint[0].y)/(s2-s1);
+//                float bMiddleY_3= firstDataPoint[0].y-(finalY_3-firstDataPoint[0].y)*s1/(s2-s1);
+//                float k1_Y_3= (finalY_3-radius - firstDataPoint[1].y)/(s2-s1);
+//                float b1_Y_3= firstDataPoint[1].y-(finalY_3-radius - firstDataPoint[1].y)*s1/(s2-s1);
+//                float k3_Y_3=(finalY_3+radius - firstDataPoint[2].y)/(s2-s1);
+//                float b3_Y_3= firstDataPoint[2].y-(finalY_3+radius - firstDataPoint[2].y)*s1/(s2-s1);
+
                 dataPoint[0].x= k0_3*mInterpolatedTime+b0_3;
                 dataPoint[0].y = centerY;
                 dataPoint[1].x = kMiddle_3*mInterpolatedTime+bMiddle_3;
@@ -320,7 +368,8 @@ private Handler handler = new Handler() {
         }else if(mInterpolatedTime>s2&&mInterpolatedTime<=s3){
 
             if(isRight) {
-                float finalX_3= firstCenterX+d*s2;
+
+                float finalX_3= firstCenterX+kx*s2;
                 float kMiddle_3 = (finalX_3-firstDataPoint[1].x)/(s2-s1);
                 float bMiddle_3 = firstDataPoint[1].x-(finalX_3-firstDataPoint[1].x)*s1/(s2-s1);
                 float d2_3 = firstDataPoint[2].x+bendingDistance;
@@ -330,13 +379,29 @@ private Handler handler = new Handler() {
                 float k2_3 = (finalX_3+radius- d2_3)/(s2-s1);
                 float b2_3 = d2_3 - s1*(finalX_3+radius-d2_3)/(s2-s1);
 
-                float finalX_4 = firstCenterX+d*s3;
+                float finalX_4 = firstCenterX+kx*s3;
                 float kMiddle_4 = (finalX_4-kMiddle_3*s2-bMiddle_3)/(s3-s2);
                 float bMiddle_4 = kMiddle_3*s2+bMiddle_3-(finalX_4-kMiddle_3*s2-bMiddle_3)*s2/(s3-s2);
                 float k0_4 = (finalX_4-radius-k0_3*s2-b0_3)/(s3-s2);
                 float b0_4 = k0_3*s2+b0_3-(finalX_4-radius-k0_3*s2-b0_3)*s2/(s3-s2);
                 float k2_4 = (finalX_4+radius- k2_3*s2-b2_3)/(s3-s2);
                 float b2_4 = k2_3*s2+b2_3 - s2*(finalX_4+radius- k2_3*s2-b2_3)/(s3-s2);
+
+//                float finalY_3 = firstCenterY+ky*s2;
+//                float kMiddleY_3= (finalY_3-firstDataPoint[0].y)/(s2-s1);
+//                float bMiddleY_3= firstDataPoint[0].y-(finalY_3-firstDataPoint[0].y)*s1/(s2-s1);
+//                float k1_Y_3= (finalY_3-radius - firstDataPoint[1].y)/(s2-s1);
+//                float b1_Y_3= firstDataPoint[1].y-(finalY_3-radius - firstDataPoint[1].y)*s1/(s2-s1);
+//                float k3_Y_3=(finalY_3+radius - firstDataPoint[2].y)/(s2-s1);
+//                float b3_Y_3= firstDataPoint[2].y-(finalY_3+radius - firstDataPoint[2].y)*s1/(s2-s1);
+//
+//                float finalY_4 = firstCenterY+ky*s3;
+//                float kMiddleY_4= (finalY_4-kMiddleY_3*s2-bMiddleY_3)/(s2-s1);
+//                float bMiddleY_4=kMiddleY_3*s2+bMiddleY_3-(finalY_4-kMiddleY_3*s2-bMiddleY_3)*s1/(s2-s1);
+//                float k1_Y_4= (finalY_4-radius - k1_Y_3*s2-b1_Y_3)/(s2-s1);
+//                float b1_Y_4= k1_Y_3*s2+b1_Y_3-(finalY_4-radius - k1_Y_3*s2-b1_Y_3)*s1/(s2-s1);
+//                float k3_Y_4=(finalY_4+radius - k3_Y_3*mInterpolatedTime-b3_Y_3)/(s2-s1);
+//                float b3_Y_4= k3_Y_3*mInterpolatedTime+b3_Y_3 - (finalY_4+radius - k3_Y_3*mInterpolatedTime-b3_Y_3)*s1/(s2-s1);
 
                 dataPoint[0].x = k0_4 * mInterpolatedTime + b0_4;
                 dataPoint[0].y = centerY;
@@ -347,7 +412,7 @@ private Handler handler = new Handler() {
                 dataPoint[3].x = kMiddle_4 * mInterpolatedTime + bMiddle_4;
                 dataPoint[3].y = centerY + radius;
             }else {
-                float finalX_3= firstCenterX+d*s2;
+                float finalX_3= firstCenterX+kx*s2;
                 float kMiddle_3 = (finalX_3-firstDataPoint[1].x)/(s2-s1);
                 float bMiddle_3 = firstDataPoint[1].x-(finalX_3-firstDataPoint[1].x)*s1/(s2-s1);
                 float d0_3 = firstDataPoint[0].x+bendingDistance;
@@ -357,13 +422,29 @@ private Handler handler = new Handler() {
                 float k2_3 = (finalX_3+radius-d2_3)/(s2-s1);
                 float b2_3 = firstDataPoint[2].x - s1*(finalX_3+radius-d2_3)/(s2-s1);
 
-                float finalX_4 = firstCenterX+d*s3;
+                float finalX_4 = firstCenterX+kx*s3;
                 float kMiddle_4 = (finalX_4-kMiddle_3*s2-bMiddle_3)/(s3-s2);
                 float bMiddle_4 = kMiddle_3*s2+bMiddle_3-(finalX_4-kMiddle_3*s2-bMiddle_3)*s2/(s3-s2);
                 float k0_4 = (finalX_4-radius-k0_3*s2-b0_3)/(s3-s2);
                 float b0_4 = k0_3*s2+b0_3-(finalX_4-radius-k0_3*s2-b0_3)*s2/(s3-s2);
                 float k2_4 = (finalX_4+radius- k2_3*s2-b2_3)/(s3-s2);
                 float b2_4 = k2_3*s2+b2_3 - s2*(finalX_4+radius- k2_3*s2-b2_3)/(s3-s2);
+
+//                float finalY_3 = firstCenterY+ky*s2;
+//                float kMiddleY_3= (finalY_3-firstDataPoint[0].y)/(s2-s1);
+//                float bMiddleY_3= firstDataPoint[0].y-(finalY_3-firstDataPoint[0].y)*s1/(s2-s1);
+//                float k1_Y_3= (finalY_3-radius - firstDataPoint[1].y)/(s2-s1);
+//                float b1_Y_3= firstDataPoint[1].y-(finalY_3-radius - firstDataPoint[1].y)*s1/(s2-s1);
+//                float k3_Y_3=(finalY_3+radius - firstDataPoint[2].y)/(s2-s1);
+//                float b3_Y_3= firstDataPoint[2].y-(finalY_3+radius - firstDataPoint[2].y)*s1/(s2-s1);
+//
+//                float finalY_4 = firstCenterY+ky*s3;
+//                float kMiddleY_4= (finalY_4-kMiddleY_3*s2-bMiddleY_3)/(s2-s1);
+//                float bMiddleY_4=kMiddleY_3*s2+bMiddleY_3-(finalY_4-kMiddleY_3*s2-bMiddleY_3)*s1/(s2-s1);
+//                float k1_Y_4= (finalY_4-radius - k1_Y_3*s2-b1_Y_3)/(s2-s1);
+//                float b1_Y_4= k1_Y_3*s2+b1_Y_3-(finalY_4-radius - k1_Y_3*s2-b1_Y_3)*s1/(s2-s1);
+//                float k3_Y_4=(finalY_4+radius - k3_Y_3*mInterpolatedTime-b3_Y_3)/(s2-s1);
+//                float b3_Y_4= k3_Y_3*mInterpolatedTime+b3_Y_3 - (finalY_4+radius - k3_Y_3*mInterpolatedTime-b3_Y_3)*s1/(s2-s1);
 
                 dataPoint[0].x = k0_4 * mInterpolatedTime + b0_4;
                 dataPoint[0].y = centerY;
@@ -397,6 +478,11 @@ private Handler handler = new Handler() {
         return dataPoint;
     }
 
+    /**
+     * 初始化控制点
+     * @param dataPoint 圆的4个数据点
+     * @return
+     */
     private PointF[] initCtrlPoint(PointF[] dataPoint){
         for(int i=0;i<ctrlPoint.length;i++){
             ctrlPoint[i] = new PointF(0,0);
@@ -425,7 +511,10 @@ private Handler handler = new Handler() {
 
     }
 
-
+    /**
+     * 绘制贝塞尔曲线
+     * @param canvas
+     */
     private void drawCubicBezier(Canvas canvas){
         /** 清除Path中的内容
          reset不保留内部数据结构，但会保留FillType.
@@ -443,11 +532,19 @@ private Handler handler = new Handler() {
 
     }
 
+    /**
+     * 重绘的过程不会回调这个方法-，-
+     * @param canvas
+     */
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
     }
 
+    /**
+     * 重绘的回调
+     * @param canvas
+     */
     @Override
     protected void dispatchDraw(Canvas canvas) {
         super.dispatchDraw(canvas);
@@ -456,17 +553,18 @@ private Handler handler = new Handler() {
         paint.setColor(Color.WHITE);
         paint.setStyle(Paint.Style.FILL);
         if(pointLimitQueue.size()==0){
-            Log.i(TAG,"dispatchDraw 0");
+//            Log.i(TAG,"dispatchDraw 0");
             return;
         }else if(pointLimitQueue.size()==1){
-            Log.i(TAG,"dispatchDraw 1");
+            /** 队列中只有一个点 */
+//            Log.i(TAG,"dispatchDraw 1");
             PointF p =pointLimitQueue.getFirst();
             initCenterPoint(p.x,p.y);
-            dataPoint =  initDataPoint(0,p.x,p.y,0);
+            dataPoint =  initDataPoint(0,0,p.x,p.y,0);
             initCtrlPoint(dataPoint);
             drawCubicBezier(canvas);
-//            canvas.drawCircle(p.x,p.y,10,paint);
         }else if(pointLimitQueue.size()==2){
+            /** 队列有2个点则重置点的数据，并执行动画重绘界面*/
             Log.i(TAG," pointLimitQueue " +pointLimitQueue.queue.toString());
             /**麻烦事情 开始吧*/
             PointF pFirst = pointLimitQueue.get(0);
@@ -475,15 +573,14 @@ private Handler handler = new Handler() {
             float yFirst = pFirst.y;
             float xLast = pLast.x;
             float yLast = pLast.y;
-            float xWidth = xLast-xFirst;//求距离，使用绝对值
+            float xWidth = xLast-xFirst;
             float yWidth = yLast-yFirst;
             float bendingDistance = xWidth/4f;
             kx = xWidth;
-            float d = kx;
             ky = yWidth;
             float resultX = firstCenterX+kx*mInterpolatedTime;
-            float resultY = firstCenterX+kx*mInterpolatedTime;
-            dataPoint = initDataPoint(d,resultX,firstCenterY,bendingDistance);
+            float resultY = firstCenterY+ky*mInterpolatedTime;
+            dataPoint = initDataPoint(kx,ky,resultX,resultY,bendingDistance);
             initCtrlPoint(dataPoint);
             List<PointF> ps = Arrays.asList(dataPoint);
             List<PointF> cs = Arrays.asList(ctrlPoint);
