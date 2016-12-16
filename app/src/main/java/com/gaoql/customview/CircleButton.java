@@ -5,8 +5,11 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.animation.Animation;
+import android.view.animation.LinearInterpolator;
 
 
 public class CircleButton extends View {
@@ -16,6 +19,7 @@ public class CircleButton extends View {
     private Paint circlePaint;//圆画笔
     private int radius=50;//圆的半径
     private int diameter;//圆的直径
+    private Animation animation;
     public CircleButton(Context context) {
         super(context);
         /**
@@ -122,7 +126,10 @@ public class CircleButton extends View {
         int a = event.getAction();
         switch (a){
             case MotionEvent.ACTION_DOWN:
-//                Log.e(TAG,"onTouchEvent ACTION_DOWN");
+//                Animation animation=this.getAnimation();
+//                animation.setDuration(3000);
+//                startAnimation(animation);
+                Log.e(TAG,"onTouchEvent ACTION_DOWN");
                 break;
             case MotionEvent.ACTION_MOVE:
 //                Log.e(TAG,"onTouchEvent ACTION_MOVE");
@@ -132,5 +139,14 @@ public class CircleButton extends View {
                 break;
         }
         return super.onTouchEvent(event);
+    }
+
+    @Override
+    public Animation getAnimation() {
+        return animation;
+    }
+
+    public void setAnimation(Animation animation) {
+        this.animation = animation;
     }
 }

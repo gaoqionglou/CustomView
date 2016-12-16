@@ -3,6 +3,7 @@ package com.gaoql.customview;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.PointF;
@@ -15,6 +16,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.AccelerateDecelerateInterpolator;
 import android.view.animation.Animation;
+import android.view.animation.ScaleAnimation;
 import android.view.animation.Transformation;
 
 import java.util.Arrays;
@@ -45,6 +47,8 @@ public class CustomViewGroup extends ViewGroup {
     private PointF[] ctrlPoint = new PointF[8];
     /** 简单的平移动画类*/
     private TranslteAnimaton move = new TranslteAnimaton();
+    ScaleAnimation animation =new ScaleAnimation(0.0f, 1.4f, 0.0f, 1.4f,
+            Animation.RELATIVE_TO_SELF, 0.5f, Animation.RELATIVE_TO_SELF, 0.5f);
     /** 动画未开始状态*/
     public static final int STATE_UNSTART = -1;
     /** 动画开始状态*/
@@ -200,7 +204,7 @@ public class CustomViewGroup extends ViewGroup {
         int w=l;//坐标
         int h=t;//
         for(int i=0;i<getChildCount();i++){
-            View childView = getChildAt(i);
+            CircleButton childView = (CircleButton)getChildAt(i);
             int childWith = childView.getMeasuredWidth();
             int childHeight = childView.getMeasuredHeight();
             MarginLayoutParams clp = (MarginLayoutParams)childView.getLayoutParams();
@@ -277,7 +281,7 @@ public class CustomViewGroup extends ViewGroup {
             List<PointF> ps = Arrays.asList(firstDataPoint);
 //            Log.i(TAG,"1-firstDataPoint "+ps.toString()  );
             List<PointF> ds = Arrays.asList(dataPoint);
-            Log.i(TAG,"1-dataPoint "+ds.toString()  );
+//            Log.i(TAG,"1-dataPoint "+ds.toString()  );
         }else if(mInterpolatedTime>0&&mInterpolatedTime<=s1){
             if(isRight) {
                 dataPoint[0].x = firstDataPoint[0].x;
@@ -301,7 +305,7 @@ public class CustomViewGroup extends ViewGroup {
             List<PointF> ps = Arrays.asList(firstDataPoint);
 //            Log.i(TAG,"2-firstDataPoint "+ps.toString()  );
             List<PointF> ds = Arrays.asList(dataPoint);
-            Log.i(TAG,"2-dataPoint "+ds.toString()  );
+//            Log.i(TAG,"2-dataPoint "+ds.toString()  );
         }else if(mInterpolatedTime>s1&&mInterpolatedTime<=s2){
 
 
@@ -364,7 +368,7 @@ public class CustomViewGroup extends ViewGroup {
             List<PointF> ps = Arrays.asList(firstDataPoint);
 //            Log.i(TAG,"3-firstDataPoint "+ps.toString()  );
             List<PointF> ds = Arrays.asList(dataPoint);
-            Log.i(TAG,"3-dataPoint "+ds.toString()  );
+//            Log.i(TAG,"3-dataPoint "+ds.toString()  );
         }else if(mInterpolatedTime>s2&&mInterpolatedTime<=s3){
 
             if(isRight) {
@@ -458,7 +462,7 @@ public class CustomViewGroup extends ViewGroup {
             List<PointF> ps = Arrays.asList(firstDataPoint);
 //            Log.i(TAG,"4-firstDataPoint "+ps.toString()  );
             List<PointF> ds = Arrays.asList(dataPoint);
-            Log.i(TAG,"4-dataPoint "+ds.toString()  );
+//            Log.i(TAG,"4-dataPoint "+ds.toString()  );
         }else{
             dataPoint[0].x=centerX-radius;
             dataPoint[0].y=centerY;
@@ -473,7 +477,7 @@ public class CustomViewGroup extends ViewGroup {
             List<PointF> ps = Arrays.asList(firstDataPoint);
 //            Log.i(TAG,"5-firstDataPoint "+ps.toString()  );
             List<PointF> ds = Arrays.asList(dataPoint);
-            Log.i(TAG,"5-dataPoint "+ds.toString()  );
+//            Log.i(TAG,"5-dataPoint "+ds.toString()  );
         }
         return dataPoint;
     }
@@ -565,7 +569,7 @@ public class CustomViewGroup extends ViewGroup {
             drawCubicBezier(canvas);
         }else if(pointLimitQueue.size()==2){
             /** 队列有2个点则重置点的数据，并执行动画重绘界面*/
-            Log.i(TAG," pointLimitQueue " +pointLimitQueue.queue.toString());
+//            Log.i(TAG," pointLimitQueue " +pointLimitQueue.queue.toString());
             /**麻烦事情 开始吧*/
             PointF pFirst = pointLimitQueue.get(0);
             PointF pLast = pointLimitQueue.get(1);
@@ -619,7 +623,7 @@ public class CustomViewGroup extends ViewGroup {
         int a = event.getAction();
         switch (a){
             case MotionEvent.ACTION_DOWN:
-//                Log.e(TAG,"onTouchEvent ACTION_DOWN");
+                Log.e(TAG,"onTouchEvent ACTION_DOWN");
                 break;
             case MotionEvent.ACTION_MOVE:
 //                Log.e(TAG,"onTouchEvent ACTION_MOVE");
@@ -639,9 +643,18 @@ public class CustomViewGroup extends ViewGroup {
                  ex = ev.getX();
                  ey = ev.getY();
                 PointF p = new PointF();
-                p.x=ex;p.y=ey;
                 Log.i(TAG,"p-"+ex+","+ey);
-                if(isInChildView(ex,ey)){
+                View v = isInChildView(ex,ey);
+                if(v!=null){
+//                    CircleButton circleButton = (CircleButton)v;
+//                    circleButton.setAnimation(animation);
+//                    circleButton.startAnimation(animation);
+                    int top = v.getTop();
+                    int bottom = v.getBottom();
+                    int left = v.getLeft();
+                    int right = v.getRight();
+                    p.x = left+(right - left)/2f;
+                    p.y = top+(bottom - top)/2f;
                     pointLimitQueue.offer(p);
                     Log.i(TAG,"ps-"+pointLimitQueue.queue.toString());
                 }
@@ -649,7 +662,7 @@ public class CustomViewGroup extends ViewGroup {
                     invalidate();
                 }else
                 handler.sendEmptyMessage(0);
-//                Log.e(TAG,"onInterceptTouchEvent ACTION_DOWN");
+                Log.e(TAG,"onInterceptTouchEvent ACTION_DOWN");
                 break;
             case MotionEvent.ACTION_MOVE:
 //                Log.e(TAG,"onInterceptTouchEvent ACTION_MOVE");
@@ -662,25 +675,27 @@ public class CustomViewGroup extends ViewGroup {
     }
 
     /**
-     * 点击位置是否在某个子View内
+     * 点击位置是否在某个子View内,如果在，返回这个View，不在返回null
      * @param x
      * @param y
      * @return
      */
-    private boolean isInChildView(float x,float y){
-        boolean isInChildView = false;
-            for(int i =0;i<getChildCount();i++){
-            View v  =getChildAt(i);
+    private View isInChildView(float x,float y){
+        View v = null;
+        for(int i =0;i<getChildCount();i++){
+            v  =getChildAt(i);
             int top = v.getTop();
             int bottom = v.getBottom();
             int left = v.getLeft();
             int right = v.getRight();
             boolean inWidth = x>=left&&x<=right;
             boolean inHeight = y>=top&&y<=bottom;
-            isInChildView = inWidth&&inHeight;
-                if(isInChildView) break;
+            boolean isInChildView = inWidth&&inHeight;
+            if(isInChildView) {
+                break;
+            }
         }
-        return isInChildView;
+        return v;
     }
 
     @Override
@@ -748,6 +763,25 @@ public class CustomViewGroup extends ViewGroup {
             return queue.size();
         }
 
+    }
+
+    public class CircleScaleAnimation extends Animation{
+        public CircleScaleAnimation(){
+
+        }
+
+        @Override
+        public void initialize(int width, int height, int parentWidth, int parentHeight) {
+            super.initialize(width, height, parentWidth, parentHeight);
+        }
+
+        @Override
+        protected void applyTransformation(float interpolatedTime, Transformation t) {
+            super.applyTransformation(interpolatedTime, t);
+            Log.e("CircleScaleAnimation","interpolatedTime-"+interpolatedTime);
+            Matrix matrix =  t.getMatrix();
+            matrix.postScale(0.5f*mInterpolatedTime,0.5f*mInterpolatedTime);
+        }
     }
 
     private class TranslteAnimaton extends Animation {
