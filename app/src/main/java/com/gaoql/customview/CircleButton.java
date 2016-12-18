@@ -149,4 +149,12 @@ public class CircleButton extends View {
     public void setAnimation(Animation animation) {
         this.animation = animation;
     }
+
+    public int getRadius() {
+        return radius;
+    }
+
+    public void setRadius(int radius) {
+        this.radius = radius;
+    }
 }
