@@ -60,6 +60,7 @@ public class CustomViewGroup extends ViewGroup {
     public static final int STATE_STOP = 2;
     /** 动画状态 */
     private int state = STATE_UNSTART;
+    private int rippleState = STATE_UNSTART;
     /** 动画播放时间 范围在[0,1] */
     private float mInterpolatedTime=0f;//0-1的播放时间
     private float rippleInterpolatedTime=0f;//0-1的播放时间
@@ -655,6 +656,10 @@ public class CustomViewGroup extends ViewGroup {
 
     @Override
     public boolean onInterceptTouchEvent(MotionEvent ev) {
+        if(state==STATE_MOVING||rippleState==STATE_MOVING){
+            Log.e(TAG,"onInterceptTouchEvent "+state);
+            return false;
+        }
         int a = ev.getAction();
         switch (a){
             case MotionEvent.ACTION_DOWN:
@@ -673,8 +678,6 @@ public class CustomViewGroup extends ViewGroup {
                     p.y = top+(bottom - top)/2f;
                     pointLimitQueue.offer(p);
                     Log.i(TAG,"ps-"+pointLimitQueue.queue.toString());
-                }else{
-                    rippleScaleAnimation.cancel();
                 }
                 if(pointLimitQueue.size()==1){
                     invalidate();
@@ -783,24 +786,6 @@ public class CustomViewGroup extends ViewGroup {
 
     }
 
-    public class CircleScaleAnimation extends Animation{
-        public CircleScaleAnimation(){
-
-        }
-
-        @Override
-        public void initialize(int width, int height, int parentWidth, int parentHeight) {
-            super.initialize(width, height, parentWidth, parentHeight);
-        }
-
-        @Override
-        protected void applyTransformation(float interpolatedTime, Transformation t) {
-            super.applyTransformation(interpolatedTime, t);
-            Log.e("CircleScaleAnimation","interpolatedTime-"+interpolatedTime);
-            Matrix matrix =  t.getMatrix();
-            matrix.postScale(0.5f*mInterpolatedTime,0.5f*mInterpolatedTime);
-        }
-    }
 
     private class TranslteAnimaton extends Animation {
         @Override
@@ -813,6 +798,15 @@ public class CustomViewGroup extends ViewGroup {
             super.applyTransformation(interpolatedTime, t);
             Log.e(TAG,"interpolatedTime "+interpolatedTime);
             mInterpolatedTime=interpolatedTime;
+            if(mInterpolatedTime>0){
+                state = STATE_START;
+            }
+            if(mInterpolatedTime==1){
+                state = STATE_STOP;
+            }
+            if(mInterpolatedTime<1){
+                state = STATE_MOVING;
+            }
             if(mInterpolatedTime!=1)invalidate();
             if(mInterpolatedTime==1&&pointLimitQueue.size()>=2){
                 pointLimitQueue.poll();
@@ -824,26 +818,7 @@ public class CustomViewGroup extends ViewGroup {
     public void  startTranslteAnimaton(){
         mInterpolatedTime = 0;
         move.setDuration(1000);
-        move.setAnimationListener(new Animation.AnimationListener() {
-            @Override
-            public void onAnimationStart(Animation animation) {
-                Log.e(TAG,"onAnimationStart");
-                state = STATE_START;
-            }
-
-            @Override
-            public void onAnimationEnd(Animation animation) {
-                Log.e(TAG,"onAnimationEnd");
-                state = STATE_STOP;
-                handler.sendEmptyMessage(1);//结束
-                handler.sendEmptyMessage(3);
-            }
-
-            @Override
-            public void onAnimationRepeat(Animation animation) {
-                Log.e(TAG,"onAnimationRepeat");
-            }
-        });
+        move.setAnimationListener(new TranslteAnimatonListener(this));
         move.setInterpolator(new AccelerateDecelerateInterpolator());
         startAnimation(move);
     }
@@ -861,8 +836,17 @@ public class CustomViewGroup extends ViewGroup {
         @Override
         protected void applyTransformation(float interpolatedTime, Transformation t) {
             super.applyTransformation(interpolatedTime, t);
-            Log.e("RippleScaleAnimation","interpolatedTime "+interpolatedTime+","+hasEnded());
+//            Log.e("RippleScaleAnimation","interpolatedTime "+interpolatedTime+","+hasEnded());
             rippleInterpolatedTime = interpolatedTime;
+            if(rippleInterpolatedTime>0){
+                rippleState = STATE_START;
+            }
+            if(rippleInterpolatedTime==1){
+                rippleState = STATE_STOP;
+            }
+            if(rippleInterpolatedTime<1){
+                rippleState = STATE_MOVING;
+            }
             invalidate();
         }
     }
@@ -870,23 +854,87 @@ public class CustomViewGroup extends ViewGroup {
     private void  startRippleScaleAnimation(){
         rippleInterpolatedTime = 0;
         rippleScaleAnimation.setDuration(1000);
-        rippleScaleAnimation.setAnimationListener(new Animation.AnimationListener() {
-            @Override
-            public void onAnimationStart(Animation animation) {
-                Log.e("RippleScaleAnimation","onAnimationStart");
-            }
-
-            @Override
-            public void onAnimationEnd(Animation animation) {
-                Log.e("RippleScaleAnimation","onAnimationEnd");
-            }
-
-            @Override
-            public void onAnimationRepeat(Animation animation) {
-                Log.e(TAG,"onAnimationRepeat");
-            }
-        });
+        rippleScaleAnimation.setAnimationListener(new RippleAnimatonListener(this));
         rippleScaleAnimation.setInterpolator(new AccelerateDecelerateInterpolator());
         startAnimation(rippleScaleAnimation);
+    }
+
+    class TranslteAnimatonListener extends MyAnimationListener{
+        private ViewGroup viewGroup;
+        public TranslteAnimatonListener(ViewGroup viewGroup){
+            super(viewGroup);
+        }
+
+        @Override
+        public void onAnimationStart(Animation animation) {
+            super.onAnimationStart(animation);
+//            state = STATE_START;
+        }
+
+        @Override
+        public void onAnimationEnd(Animation animation) {
+            super.onAnimationEnd(animation);
+//            state = STATE_STOP;
+            handler.sendEmptyMessage(1);//结束
+            handler.sendEmptyMessage(3);
+        }
+
+        @Override
+        public void onAnimationRepeat(Animation animation) {
+            super.onAnimationRepeat(animation);
+        }
+    }
+    class RippleAnimatonListener extends MyAnimationListener{
+        private ViewGroup viewGroup;
+        public RippleAnimatonListener(ViewGroup viewGroup){
+            super(viewGroup);
+        }
+
+        @Override
+        public void onAnimationStart(Animation animation) {
+            super.onAnimationStart(animation);
+//            rippleState = STATE_START;
+            Log.e("RippleAnimatonListener","onAnimationStart "+rippleState);
+        }
+
+        @Override
+        public void onAnimationEnd(Animation animation) {
+            super.onAnimationEnd(animation);
+//            rippleState = STATE_STOP;
+            Log.e("RippleAnimatonListener","onAnimationEnd "+rippleState);
+        }
+
+        @Override
+        public void onAnimationRepeat(Animation animation) {
+            super.onAnimationRepeat(animation);
+        }
+    }
+
+
+    class MyAnimationListener implements Animation.AnimationListener{
+        private ViewGroup viewGroup;
+        public MyAnimationListener(ViewGroup viewGroup){
+            this.viewGroup = viewGroup;
+        }
+        @Override
+        public void onAnimationStart(Animation animation) {
+//            for(int i=0;i<viewGroup.getChildCount();i++){
+//                View v =  viewGroup.getChildAt(i);
+//                v.setClickable(false);
+//            }
+        }
+
+        @Override
+        public void onAnimationEnd(Animation animation) {
+//            for(int i=0;i<viewGroup.getChildCount();i++){
+//                View v =  viewGroup.getChildAt(i);
+//                v.setClickable(true);
+//            }
+        }
+
+        @Override
+        public void onAnimationRepeat(Animation animation) {
+
+        }
     }
 }
