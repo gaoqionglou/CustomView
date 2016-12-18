@@ -38,6 +38,7 @@ public class CustomViewGroup extends ViewGroup {
     private float firstCenterX,firstCenterY;
     private Paint linePaint;
     private Paint paint;
+    private Paint ripplePaint;//环涟漪画笔
     private Path path ;
     /** 圆的4个点 */
     private PointF[] dataPoint = new PointF[4];
@@ -47,8 +48,8 @@ public class CustomViewGroup extends ViewGroup {
     private PointF[] ctrlPoint = new PointF[8];
     /** 简单的平移动画类*/
     private TranslteAnimaton move = new TranslteAnimaton();
-    ScaleAnimation animation =new ScaleAnimation(0.0f, 1.4f, 0.0f, 1.4f,
-            Animation.RELATIVE_TO_SELF, 0.5f, Animation.RELATIVE_TO_SELF, 0.5f);
+    private RippleScaleAnimation rippleScaleAnimation = new RippleScaleAnimation();
+    private float rippleWidth=20f;
     /** 动画未开始状态*/
     public static final int STATE_UNSTART = -1;
     /** 动画开始状态*/
@@ -61,6 +62,7 @@ public class CustomViewGroup extends ViewGroup {
     private int state = STATE_UNSTART;
     /** 动画播放时间 范围在[0,1] */
     private float mInterpolatedTime=0f;//0-1的播放时间
+    private float rippleInterpolatedTime=0f;//0-1的播放时间
     /** 圆的平移过程x,y的斜率 */
     private float kx,ky ;
     /** 触摸坐标 */
@@ -86,6 +88,9 @@ public class CustomViewGroup extends ViewGroup {
             case 1:
                 // 直接移除，定时器停止
                 handler.removeMessages(0);
+                break;
+            case 3:
+                startRippleScaleAnimation();
                 break;
 
             default:
@@ -226,6 +231,7 @@ public class CustomViewGroup extends ViewGroup {
         linePaint = new Paint();
         paint = new Paint();
         path = new Path();
+        ripplePaint = new Paint();
     }
     /** 初始化起始位置的中心点 */
     private void initCenterPoint(float x,float y){
@@ -561,15 +567,16 @@ public class CustomViewGroup extends ViewGroup {
             return;
         }else if(pointLimitQueue.size()==1){
             /** 队列中只有一个点 */
-//            Log.i(TAG,"dispatchDraw 1");
+            Log.i(TAG,"dispatchDraw 1");
             PointF p =pointLimitQueue.getFirst();
             initCenterPoint(p.x,p.y);
             dataPoint =  initDataPoint(0,0,p.x,p.y,0);
             initCtrlPoint(dataPoint);
             drawCubicBezier(canvas);
+            ripple(p,canvas);
         }else if(pointLimitQueue.size()==2){
             /** 队列有2个点则重置点的数据，并执行动画重绘界面*/
-//            Log.i(TAG," pointLimitQueue " +pointLimitQueue.queue.toString());
+            Log.i(TAG," dispatchDraw 2  pointLimitQueue-" +pointLimitQueue.queue.toString());
             /**麻烦事情 开始吧*/
             PointF pFirst = pointLimitQueue.get(0);
             PointF pLast = pointLimitQueue.get(1);
@@ -592,6 +599,17 @@ public class CustomViewGroup extends ViewGroup {
             drawCubicBezier(canvas);
 
         }
+    }
+
+    private void ripple(PointF p,Canvas canvas){
+        ripplePaint.setStyle(Paint.Style.STROKE);
+        ripplePaint.setColor(Color.WHITE);
+        ripplePaint.setStrokeWidth(rippleWidth*rippleInterpolatedTime);
+        ripplePaint.setAlpha(255-(int)(255*rippleInterpolatedTime));
+        float rw = rippleWidth*rippleInterpolatedTime;
+        CircleButton circleButton =(CircleButton) isInChildView(p.x,p.y);
+        canvas.drawCircle(p.x,p.y,circleButton.getRadius()+rw/2,ripplePaint);
+
     }
 
     @Override
@@ -646,9 +664,7 @@ public class CustomViewGroup extends ViewGroup {
                 Log.i(TAG,"p-"+ex+","+ey);
                 View v = isInChildView(ex,ey);
                 if(v!=null){
-//                    CircleButton circleButton = (CircleButton)v;
-//                    circleButton.setAnimation(animation);
-//                    circleButton.startAnimation(animation);
+                    handler.sendEmptyMessage(3);
                     int top = v.getTop();
                     int bottom = v.getBottom();
                     int left = v.getLeft();
@@ -657,6 +673,8 @@ public class CustomViewGroup extends ViewGroup {
                     p.y = top+(bottom - top)/2f;
                     pointLimitQueue.offer(p);
                     Log.i(TAG,"ps-"+pointLimitQueue.queue.toString());
+                }else{
+                    rippleScaleAnimation.cancel();
                 }
                 if(pointLimitQueue.size()==1){
                     invalidate();
@@ -793,6 +811,7 @@ public class CustomViewGroup extends ViewGroup {
         @Override
         protected void applyTransformation(float interpolatedTime, Transformation t) {
             super.applyTransformation(interpolatedTime, t);
+            Log.e(TAG,"interpolatedTime "+interpolatedTime);
             mInterpolatedTime=interpolatedTime;
             if(mInterpolatedTime!=1)invalidate();
             if(mInterpolatedTime==1&&pointLimitQueue.size()>=2){
@@ -816,7 +835,8 @@ public class CustomViewGroup extends ViewGroup {
             public void onAnimationEnd(Animation animation) {
                 Log.e(TAG,"onAnimationEnd");
                 state = STATE_STOP;
-                handler.sendEmptyMessage(1);
+                handler.sendEmptyMessage(1);//结束
+                handler.sendEmptyMessage(3);
             }
 
             @Override
@@ -826,5 +846,47 @@ public class CustomViewGroup extends ViewGroup {
         });
         move.setInterpolator(new AccelerateDecelerateInterpolator());
         startAnimation(move);
+    }
+
+    class RippleScaleAnimation extends Animation{
+        public RippleScaleAnimation(){
+
+        }
+
+        @Override
+        public void initialize(int width, int height, int parentWidth, int parentHeight) {
+            super.initialize(width, height, parentWidth, parentHeight);
+        }
+
+        @Override
+        protected void applyTransformation(float interpolatedTime, Transformation t) {
+            super.applyTransformation(interpolatedTime, t);
+            Log.e("RippleScaleAnimation","interpolatedTime "+interpolatedTime+","+hasEnded());
+            rippleInterpolatedTime = interpolatedTime;
+            invalidate();
+        }
+    }
+
+    private void  startRippleScaleAnimation(){
+        rippleInterpolatedTime = 0;
+        rippleScaleAnimation.setDuration(1000);
+        rippleScaleAnimation.setAnimationListener(new Animation.AnimationListener() {
+            @Override
+            public void onAnimationStart(Animation animation) {
+                Log.e("RippleScaleAnimation","onAnimationStart");
+            }
+
+            @Override
+            public void onAnimationEnd(Animation animation) {
+                Log.e("RippleScaleAnimation","onAnimationEnd");
+            }
+
+            @Override
+            public void onAnimationRepeat(Animation animation) {
+                Log.e(TAG,"onAnimationRepeat");
+            }
+        });
+        rippleScaleAnimation.setInterpolator(new AccelerateDecelerateInterpolator());
+        startAnimation(rippleScaleAnimation);
     }
 }
