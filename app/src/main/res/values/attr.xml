@@ -8,4 +8,9 @@
     <attr name="titleTextSize" format="dimension" />
 </declare-styleable>
 
+    <declare-styleable name="CircleButton">
+        <attr name="radius" format="dimension" />
+        <attr name="backgroundd" format="reference|color"/>
+    </declare-styleable>
+<attr name="testViewStyle1" format="reference"/>
 </resources>

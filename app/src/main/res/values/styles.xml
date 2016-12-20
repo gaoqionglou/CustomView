@@ -6,6 +6,7 @@
         <item name="colorPrimary">@color/colorPrimary</item>
         <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
         <item name="colorAccent">@color/colorAccent</item>
+        <item name="testViewStyle1">@null</item>
     </style>
     <style name="text_flag_01">
         <item name="android:layout_width">wrap_content</item>
@@ -13,5 +14,13 @@
         <item name="android:layout_margin">4dp</item>
         <item name="android:background">@drawable/flag_01</item>
         <item name="android:textColor">#ffffff</item>
+    </style>
+    <style name="test_Style">
+        <item name="backgroundd">@color/colorPrimaryDark</item>
+        <item name="radius">40dp</item>
+    </style>
+    <style name="testViewStyle1">
+        <item name="backgroundd">@color/colorAccent</item>
+        <item name="radius">60dp</item>
     </style>
 </resources>
