@@ -210,7 +210,7 @@ public class CustomViewGroup extends ViewGroup {
         int w=l;//坐标
         int h=t;//
         for(int i=0;i<getChildCount();i++){
-            CircleButton childView = (CircleButton)getChildAt(i);
+            View childView = getChildAt(i);
             int childWith = childView.getMeasuredWidth();
             int childHeight = childView.getMeasuredHeight();
             MarginLayoutParams clp = (MarginLayoutParams)childView.getLayoutParams();
@@ -657,7 +657,6 @@ public class CustomViewGroup extends ViewGroup {
     @Override
     public boolean onInterceptTouchEvent(MotionEvent ev) {
         if(state==STATE_MOVING||rippleState==STATE_MOVING){
-            Log.e(TAG,"onInterceptTouchEvent "+state);
             return false;
         }
         int a = ev.getAction();
@@ -853,7 +852,7 @@ public class CustomViewGroup extends ViewGroup {
 
     private void  startRippleScaleAnimation(){
         rippleInterpolatedTime = 0;
-        rippleScaleAnimation.setDuration(1000);
+        rippleScaleAnimation.setDuration(500);
         rippleScaleAnimation.setAnimationListener(new RippleAnimatonListener(this));
         rippleScaleAnimation.setInterpolator(new AccelerateDecelerateInterpolator());
         startAnimation(rippleScaleAnimation);
