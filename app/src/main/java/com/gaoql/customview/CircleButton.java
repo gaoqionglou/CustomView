@@ -1,15 +1,19 @@
 package com.gaoql.customview;
 
 import android.content.Context;
+import android.content.res.TypedArray;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.util.AttributeSet;
 import android.util.Log;
+import android.util.TypedValue;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.animation.Animation;
 import android.view.animation.LinearInterpolator;
+
+import com.gaoql.R;
 
 
 public class CircleButton extends View {
@@ -22,17 +26,22 @@ public class CircleButton extends View {
     private Animation animation;
     public CircleButton(Context context) {
         super(context);
-        /**
-         * 为了触发ACTION_MOVE ACTION_UP
-         */
+        /** 为了触发ACTION_MOVE ACTION_UP*/
         setClickable(true);
         init();
     }
 
     public CircleButton(Context context, AttributeSet attrs) {
         super(context, attrs);
+        TypedArray typedArray = context.obtainStyledAttributes(attrs, R.styleable.CircleButton);
+        float radius =  typedArray.getDimension(R.styleable.CircleButton_radius,50);
+        int background = typedArray.getResourceId(R.styleable.CircleButton_backgroundd,-1);
+
+        this.setRadius((int)radius);
+        /** 为了触发ACTION_MOVE ACTION_UP*/
         setClickable(true);
         init();
+        typedArray.recycle();
     }
 
     @Override
@@ -107,8 +116,6 @@ public class CircleButton extends View {
         int a = event.getAction();
         switch (a){
             case MotionEvent.ACTION_DOWN:
-                float ex = event.getX();
-                float ey = event.getY();
 //                Log.e(TAG,"dispatchTouchEvent ACTION_DOWN");
                 break;
             case MotionEvent.ACTION_MOVE:
@@ -126,9 +133,6 @@ public class CircleButton extends View {
         int a = event.getAction();
         switch (a){
             case MotionEvent.ACTION_DOWN:
-//                Animation animation=this.getAnimation();
-//                animation.setDuration(3000);
-//                startAnimation(animation);
                 Log.e(TAG,"onTouchEvent ACTION_DOWN");
                 break;
             case MotionEvent.ACTION_MOVE:
