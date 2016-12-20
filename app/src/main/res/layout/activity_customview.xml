@@ -9,7 +9,7 @@
         android:layout_height="wrap_content"
         custom:titleText="3712"
         android:padding="10dp"
-        custom:titleTextColor="#ff0000"
+        custom:titleTextColor="@color/colorPrimaryDark"
         android:layout_centerInParent="true"
         custom:titleTextSize="40sp" />
 
