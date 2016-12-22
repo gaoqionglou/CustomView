@@ -703,15 +703,16 @@ public class CustomViewGroup extends ViewGroup {
     private View isInChildView(float x,float y){
         View v = null;
         for(int i =0;i<getChildCount();i++){
-            v  =getChildAt(i);
-            int top = v.getTop();
-            int bottom = v.getBottom();
-            int left = v.getLeft();
-            int right = v.getRight();
+            View childView  =getChildAt(i);
+            int top = childView.getTop();
+            int bottom = childView.getBottom();
+            int left = childView.getLeft();
+            int right = childView.getRight();
             boolean inWidth = x>=left&&x<=right;
             boolean inHeight = y>=top&&y<=bottom;
             boolean isInChildView = inWidth&&inHeight;
             if(isInChildView) {
+                v = childView;
                 break;
             }
         }

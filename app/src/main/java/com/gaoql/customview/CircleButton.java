@@ -2,9 +2,14 @@ package com.gaoql.customview;
 
 import android.content.Context;
 import android.content.res.TypedArray;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.BitmapShader;
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.Matrix;
 import android.graphics.Paint;
+import android.graphics.Shader;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.util.TypedValue;
@@ -21,28 +26,54 @@ public class CircleButton extends View {
     private int mWidth;
     private int mHeight;
     private Paint circlePaint;//圆画笔
+    private Paint bitmapPaint;//位图画笔
+    private Bitmap mBitmap;
+    private BitmapShader mBitmapShader;
+    private Matrix mMatrix;
     private int radius=50;//圆的半径
     private int diameter;//圆的直径
+    private int mBackgroudColor=0;
+    private int mBackgroud=0;
     private Animation animation;
     public CircleButton(Context context) {
-        super(context);
-        /** 为了触发ACTION_MOVE ACTION_UP*/
-        setClickable(true);
-        init();
+        this(context,null);
     }
 
     public CircleButton(Context context, AttributeSet attrs) {
-        super(context, attrs);
-        TypedArray typedArray = context.obtainStyledAttributes(attrs, R.styleable.CircleButton);
-        float radius =  typedArray.getDimension(R.styleable.CircleButton_radius,50);
-        int background = typedArray.getResourceId(R.styleable.CircleButton_backgroundd,-1);
+        this(context,attrs,0);
+    }
 
-        this.setRadius((int)radius);
+    public CircleButton(Context context, AttributeSet attrs, int defStyleAttr) {
+        super(context, attrs, defStyleAttr);
+//        required >API 15
+//        TypedArray a = context.getTheme().obtainStyledAttributes(attrs, R.styleable.CustomTitleView, defStyle, R.style.DefualtCircleButton);
+        TypedArray typedArray = context.obtainStyledAttributes(attrs,R.styleable.CircleButton);
+        for(int i=0;i<typedArray.getIndexCount();i++){
+            int attr = typedArray.getIndex(i);
+            switch (attr){
+                case R.styleable.CircleButton_radius:
+                    setRadius(radius);
+                    break;
+                case R.styleable.CircleButton_backgroundColor:
+                    mBackgroudColor = typedArray.getColor(attr,Color.WHITE);
+                    break;
+                case R.styleable.CircleButton_backgroundDrawable:
+                    mBackgroud = typedArray.getResourceId(attr,0);
+                    mBitmap = BitmapFactory.decodeResource(getResources(),mBackgroud);
+                    mBitmapShader = new BitmapShader(mBitmap, Shader.TileMode.CLAMP, Shader.TileMode.CLAMP);
+                    setBitmap(mBitmap);
+                    break;
+                default:
+                    break;
+            }
+
+        }
+        typedArray.recycle();
         /** 为了触发ACTION_MOVE ACTION_UP*/
         setClickable(true);
         init();
-        typedArray.recycle();
     }
+
 
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
@@ -66,13 +97,30 @@ public class CircleButton extends View {
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
-        canvas.drawCircle(mWidth/2,radius,radius,circlePaint);
+        if (mBackgroud == 0) {
+            mBackgroudColor = mBackgroudColor == 0 ? Color.WHITE : mBackgroudColor;// TODO:构造函数里面默认给了白色，为什么是0啊喂！
+            circlePaint.setColor(mBackgroudColor);
+            canvas.drawCircle(mWidth / 2, getRadius(), getRadius(), circlePaint);
+        } else {
+//            float scaleX = mWidth / mBitmap.getWidth();
+//            float scaleY = mHeight / mBitmap.getHeight();
+            //取最小值出来，如果用上面的做法去缩放会显示不全
+            int size = Math.min(mBitmap.getWidth(), mBitmap.getHeight());
+            float scale = mWidth * 1.0f / size;
+            mMatrix.postScale(scale, scale);
+            mBitmapShader.setLocalMatrix(mMatrix);
+            bitmapPaint.setShader(mBitmapShader);
+            canvas.drawCircle(mWidth / 2, getRadius(), getRadius(), bitmapPaint);
+        }
+
     }
 
     private void init(){
         circlePaint = new Paint();
         circlePaint.setStyle(Paint.Style.FILL);
-        circlePaint.setColor(Color.RED);
+        circlePaint.setColor(Color.WHITE);
+        bitmapPaint = new Paint();
+        mMatrix = new Matrix();
     }
 
     private int getMeasureWidthSize(int measureSpec,int mode){
@@ -160,5 +208,21 @@ public class CircleButton extends View {
 
     public void setRadius(int radius) {
         this.radius = radius;
+    }
+
+    public Bitmap getBitmap() {
+        return mBitmap;
+    }
+
+    public void setBitmap(Bitmap mBitmap) {
+        this.mBitmap = mBitmap;
+    }
+
+    public Matrix getMatrix() {
+        return mMatrix;
+    }
+
+    public void setMatrix(Matrix mMatrix) {
+        this.mMatrix = mMatrix;
     }
 }
