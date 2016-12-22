@@ -5,8 +5,7 @@
     android:layout_height="match_parent">
     <com.gaoql.customview.TestView
         android:id="@+id/test1"
-        app:backgroundd="@drawable/ghoul"
-        app:radius="30dp"
+        style="@style/testViewStyle1"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content" />
 
