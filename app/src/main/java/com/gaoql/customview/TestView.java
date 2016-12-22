@@ -50,11 +50,11 @@ public class TestView extends View {
 
     public TestView(Context context, AttributeSet attrs) {
         super(context, attrs);
-        TypedArray typedArray = context.obtainStyledAttributes(attrs, R.styleable.CircleButton);
-        float radius =  typedArray.getDimension(R.styleable.CircleButton_radius,50);
-        int background = typedArray.getResourceId(R.styleable.CircleButton_backgroundd,-1);
-        String one = typedArray.getString(R.styleable.CircleButton_radius);
-        String two = typedArray.getString(R.styleable.CircleButton_backgroundd);
+        TypedArray typedArray = context.obtainStyledAttributes(attrs, R.styleable.TestView);
+        float radius =  typedArray.getDimension(R.styleable.TestView_testradius,50);
+        int background = typedArray.getResourceId(R.styleable.TestView_testbackgroundd,-1);
+        String one = typedArray.getString(R.styleable.TestView_testradius);
+        String two = typedArray.getString(R.styleable.TestView_testbackgroundd);
         Log.i("test", "one:" + one);
         Log.i("test", "two:" + two);
         //typedArray.getResourceId(R.styleable.CircleButton_background,R.color.colorAccent);
