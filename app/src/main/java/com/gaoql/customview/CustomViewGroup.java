@@ -19,6 +19,8 @@ import android.view.animation.Animation;
 import android.view.animation.ScaleAnimation;
 import android.view.animation.Transformation;
 
+import com.gaoql.R;
+
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
@@ -210,12 +212,14 @@ public class CustomViewGroup extends ViewGroup {
         int w=l;//坐标
         int h=t;//
         for(int i=0;i<getChildCount();i++){
-            View childView = getChildAt(i);
+            CircleButton childView = (CircleButton)getChildAt(i);
+            radius=childView.getRadius();
             int childWith = childView.getMeasuredWidth();
             int childHeight = childView.getMeasuredHeight();
             MarginLayoutParams clp = (MarginLayoutParams)childView.getLayoutParams();
             w+=childWith+clp.leftMargin+clp.rightMargin;
-//            Log.e(TAG,"CHILD onLayout: "+(i+1)+",l-"+(l+w-childWith)+",t-"+t+",r-"+w+",b-"+b);
+            Log.e(TAG,"CHILD onLayout: "+(i+1)+",l-"+(l+w-childWith)+",t-"+t+",r-"+w+",b-"+b);
+            Log.e(TAG,"CHILD onLayout: "+(i+1)+"top-"+childView.getTop()+",bottom-"+childView.getBottom()+",left-"+childView.getLeft()+",right-"+childView.getRight());
             childView.layout(l+w-childWith,t,w,childHeight);
         }
 
@@ -498,6 +502,7 @@ public class CustomViewGroup extends ViewGroup {
         for(int i=0;i<ctrlPoint.length;i++){
             ctrlPoint[i] = new PointF(0,0);
         }
+        diff = radius*C;
         ctrlPoint[0].x=dataPoint[0].x;
         ctrlPoint[0].y=dataPoint[0].y-diff;
 
@@ -537,7 +542,7 @@ public class CustomViewGroup extends ViewGroup {
         path.cubicTo(ctrlPoint[2].x,ctrlPoint[2].y,ctrlPoint[3].x,ctrlPoint[3].y,dataPoint[2].x,dataPoint[2].y);
         path.cubicTo(ctrlPoint[4].x,ctrlPoint[4].y,ctrlPoint[5].x,ctrlPoint[5].y,dataPoint[3].x,dataPoint[3].y);
         path.cubicTo(ctrlPoint[6].x,ctrlPoint[6].y,ctrlPoint[7].x,ctrlPoint[7].y,dataPoint[0].x,dataPoint[0].y);
-        paint.setColor(Color.WHITE);
+        paint.setColor(getResources().getColor(R.color.colorAccent));
         paint.setStyle(Paint.Style.FILL);
         canvas.drawPath(path,paint);
 

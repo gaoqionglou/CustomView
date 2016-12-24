@@ -1,15 +1,19 @@
-<com.gaoql.customview.CustomViewGroup
+<com.gaoql.customview.CustomRelativeLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
+    android:background="#969696"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content" >
+<com.gaoql.customview.CustomViewGroup
     android:id="@+id/customviewgroup"
     xmlns:circleButton="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:background="#123123" >
+    >
 
   <com.gaoql.customview.CircleButton
       android:id="@+id/btn1"
       circleButton:radius="30dp"
-      circleButton:backgroundDrawable="@drawable/ghoul"
+      circleButton:backgroundDrawable="@drawable/ic_exposure_plus_2_black_24dp"
       android:layout_margin="10dp"
       android:layout_width="wrap_content"
       android:layout_height="wrap_content"
@@ -17,7 +21,7 @@
     <com.gaoql.customview.CircleButton
         android:id="@+id/btn2"
         circleButton:radius="30dp"
-        circleButton:backgroundDrawable="@drawable/image"
+        circleButton:backgroundDrawable="@drawable/ic_exposure_plus_1_black_24dp"
         android:layout_margin="10dp"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -25,9 +29,11 @@
     <com.gaoql.customview.CircleButton
         android:id="@+id/btn3"
         circleButton:radius="30dp"
-        circleButton:backgroundColor="@color/colorAccent"
+        circleButton:backgroundDrawable="@drawable/ic_exposure_zero_black_24dp"
         android:layout_margin="10dp"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         />
 </com.gaoql.customview.CustomViewGroup>
+
+</com.gaoql.customview.CustomRelativeLayout>

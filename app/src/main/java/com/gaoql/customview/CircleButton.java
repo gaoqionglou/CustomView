@@ -9,7 +9,13 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Matrix;
 import android.graphics.Paint;
+import android.graphics.Path;
+import android.graphics.PixelFormat;
 import android.graphics.Shader;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
+import android.graphics.drawable.TransitionDrawable;
+import android.graphics.drawable.VectorDrawable;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.util.TypedValue;
@@ -25,6 +31,7 @@ public class CircleButton extends View {
     public static final String TAG="GAOVG-CircleButton";
     private int mWidth;
     private int mHeight;
+    private Paint borderPaint;//白边画笔
     private Paint circlePaint;//圆画笔
     private Paint bitmapPaint;//位图画笔
     private Bitmap mBitmap;
@@ -35,6 +42,7 @@ public class CircleButton extends View {
     private int mBackgroudColor=0;
     private int mBackgroud=0;
     private Animation animation;
+    private Drawable mDrawable;
     public CircleButton(Context context) {
         this(context,null);
     }
@@ -52,14 +60,16 @@ public class CircleButton extends View {
             int attr = typedArray.getIndex(i);
             switch (attr){
                 case R.styleable.CircleButton_radius:
+                    radius = (int)typedArray.getDimension(attr,radius);
                     setRadius(radius);
                     break;
                 case R.styleable.CircleButton_backgroundColor:
                     mBackgroudColor = typedArray.getColor(attr,Color.WHITE);
                     break;
                 case R.styleable.CircleButton_backgroundDrawable:
-                    mBackgroud = typedArray.getResourceId(attr,0);
-                    mBitmap = BitmapFactory.decodeResource(getResources(),mBackgroud);
+                    mDrawable = typedArray.getDrawable(attr);
+                    mBitmap =drawableToBitmap(mDrawable);
+//                    mBitmap = drawab;//BitmapFactory.decodeResource(getResources(),mBackgroud);
                     mBitmapShader = new BitmapShader(mBitmap, Shader.TileMode.CLAMP, Shader.TileMode.CLAMP);
                     setBitmap(mBitmap);
                     break;
@@ -97,21 +107,30 @@ public class CircleButton extends View {
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
-        if (mBackgroud == 0) {
+        canvas.drawCircle(mWidth/2,getRadius(),getRadius(),borderPaint);
+/*        if (mBackgroud == 0) {
             mBackgroudColor = mBackgroudColor == 0 ? Color.WHITE : mBackgroudColor;// TODO:构造函数里面默认给了白色，为什么是0啊喂！
             circlePaint.setColor(mBackgroudColor);
             canvas.drawCircle(mWidth / 2, getRadius(), getRadius(), circlePaint);
         } else {
+            Path p = new Path();
+            p.addCircle(mWidth / 2,getRadius(), getRadius(), Path.Direction.CW);
+            canvas.clipPath(p);
+            if(mBackgroudColor!=0){
+                circlePaint.setColor(Color.GRAY);
+//                canvas.drawColor(mBackgroudColor);
+            }
 //            float scaleX = mWidth / mBitmap.getWidth();
 //            float scaleY = mHeight / mBitmap.getHeight();
             //取最小值出来，如果用上面的做法去缩放会显示不全
+
             int size = Math.min(mBitmap.getWidth(), mBitmap.getHeight());
             float scale = mWidth * 1.0f / size;
             mMatrix.postScale(scale, scale);
             mBitmapShader.setLocalMatrix(mMatrix);
             bitmapPaint.setShader(mBitmapShader);
             canvas.drawCircle(mWidth / 2, getRadius(), getRadius(), bitmapPaint);
-        }
+        }*/
 
     }
 
@@ -120,6 +139,10 @@ public class CircleButton extends View {
         circlePaint.setStyle(Paint.Style.FILL);
         circlePaint.setColor(Color.WHITE);
         bitmapPaint = new Paint();
+        borderPaint=new Paint();
+        borderPaint.setStyle(Paint.Style.STROKE);
+        borderPaint.setColor(Color.WHITE);
+        borderPaint.setStrokeWidth(1);
         mMatrix = new Matrix();
     }
 
@@ -224,5 +247,38 @@ public class CircleButton extends View {
 
     public void setMatrix(Matrix mMatrix) {
         this.mMatrix = mMatrix;
+    }
+
+    public void setDrawable(Drawable mDrawable) {
+        this.mDrawable = mDrawable;
+    }
+
+    public Drawable getDrawable() {
+        return mDrawable;
+    }
+
+    public static Bitmap drawableToBitmap(Drawable drawable) {
+
+
+        Bitmap bitmap = Bitmap.createBitmap(
+
+                drawable.getIntrinsicWidth(),
+
+                drawable.getIntrinsicHeight(),
+
+                drawable.getOpacity() != PixelFormat.OPAQUE ? Bitmap.Config.ARGB_8888
+
+                        : Bitmap.Config.RGB_565);
+
+        Canvas canvas = new Canvas(bitmap);
+
+        //canvas.setBitmap(bitmap);
+
+        drawable.setBounds(0, 0, drawable.getIntrinsicWidth(), drawable.getIntrinsicHeight());
+
+        drawable.draw(canvas);
+
+        return bitmap;
+
     }
 }
