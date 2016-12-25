@@ -99,9 +99,9 @@ public class CustomRelativeLayout extends RelativeLayout {
         Paint p1 =  new Paint();
         p1.setColor(Color.RED);
         p1.setStrokeWidth(5);
-//        for(int i=0;i<customViewGroup.getChildCount();i++){
+        for(int i=0;i<customViewGroup.getChildCount();i++){
 
-            CircleButton circleButton = (CircleButton)customViewGroup.getChildAt(0);
+            CircleButton circleButton = (CircleButton)customViewGroup.getChildAt(i);
             int top =  circleButton.getTop();
             int bottom = circleButton.getBottom();
             int left = circleButton.getLeft();
@@ -111,7 +111,7 @@ public class CustomRelativeLayout extends RelativeLayout {
             int height = bottom-top;
             Drawable drawable = circleButton.getDrawable();
             Bitmap bitmap = drawableToBitmap(drawable);
-            canvas.drawBitmap(bitmap,left+circleButton.getRadius()-bitmap.getWidth()/2,top+circleButton.getRadius()-bitmap.getHeight()/2,p);
+            canvas.drawBitmap(bitmap,left+circleButton.getRadius()-bitmap.getWidth()/2,top+circleButton.getRadius()-bitmap.getHeight()/2,p1);
 //            int size =  Math.min(bitmap.getWidth(),bitmap.getHeight());
 //            float scale = width*1f/size;
 //            BitmapShader shader = new BitmapShader(bitmap, Shader.TileMode.CLAMP, Shader.TileMode.CLAMP);
@@ -122,7 +122,7 @@ public class CustomRelativeLayout extends RelativeLayout {
 //            float cx = left+circleButton.getRadius();
 //            canvas.drawCircle(cx,circleButton.getRadius(),circleButton.getRadius(),p);
 //            Log.e(TAG,"cx-"+cx+",cy-"+circleButton.getRadius());
-//        }
+        }
 
     }
 
