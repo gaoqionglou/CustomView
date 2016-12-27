@@ -3,27 +3,40 @@ package com.gaoql.customview;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.util.AttributeSet;
+import android.util.Log;
+import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Scroller;
 
 
-
-public class SlidingViewGroup extends ViewGroup {
+public class SlidingViewGroup extends ViewGroup implements GestureDetector.OnGestureListener{
+    public static final String TAG="SlidingViewGroup";
+    private GestureDetector gestureDetector ;
+    private Scroller mScroller;
     public SlidingViewGroup(Context context) {
-        super(context);
+        this(context,null);
     }
 
     public SlidingViewGroup(Context context, AttributeSet attrs) {
-        super(context, attrs);
+        this(context,attrs,0);
     }
 
     public SlidingViewGroup(Context context, AttributeSet attrs, int defStyleAttr) {
-        super(context, attrs, defStyleAttr);
+        this(context,attrs,defStyleAttr,0);
     }
 
     public SlidingViewGroup(Context context, AttributeSet attrs, int defStyleAttr, int defStyleRes) {
         super(context, attrs, defStyleAttr, defStyleRes);
+        setClickable(true);
+        init(context);
+    }
+    /** 初始化手势监听器*/
+    private void init(Context context){
+        gestureDetector = new GestureDetector(context,this);
+        gestureDetector.setIsLongpressEnabled(false);
+        mScroller = new Scroller(context);
     }
 
     /** 1 测试和布局*/
@@ -58,6 +71,7 @@ public class SlidingViewGroup extends ViewGroup {
         }
         if(widthMode==MeasureSpec.EXACTLY&&heightMode==MeasureSpec.EXACTLY){
             setMeasuredDimension(widthSize,heightSize);
+            return;
         }else if(widthMode==MeasureSpec.AT_MOST){
             for(int i=0;i<getChildCount();i++){
                 View v = getChildAt(i);
@@ -119,12 +133,12 @@ public class SlidingViewGroup extends ViewGroup {
 
     @Override
     public boolean onInterceptTouchEvent(MotionEvent ev) {
-        return super.onInterceptTouchEvent(ev);
+        return !super.onInterceptTouchEvent(ev);
     }
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
-        return super.onTouchEvent(event);
+        return gestureDetector.onTouchEvent(event);
     }
     /** 4 布局  */
     @Override
@@ -140,5 +154,64 @@ public class SlidingViewGroup extends ViewGroup {
     @Override
     protected LayoutParams generateDefaultLayoutParams() {
         return new MarginLayoutParams(LayoutParams.MATCH_PARENT,LayoutParams.MATCH_PARENT);
+    }
+
+    @Override
+    public boolean onDown(MotionEvent e) {
+        Log.e(TAG,"onDown");
+        return true;
+    }
+
+    @Override
+    public void onShowPress(MotionEvent e) {
+        Log.e(TAG,"onShowPress");
+    }
+
+    @Override
+    public boolean onSingleTapUp(MotionEvent e) {
+        Log.e(TAG,"onSingleTapUp");
+        return false;
+    }
+
+    @Override
+    public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY) {
+        Log.e(TAG,"onScroll");
+        smoothScrollTo(200,0);
+        return true;
+    }
+
+    @Override
+    public void onLongPress(MotionEvent e) {
+        Log.e(TAG,"onLongPress");
+    }
+
+    @Override
+    public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
+        Log.e(TAG,"onFling");
+        return true;
+    }
+
+    @Override
+    public void computeScroll() {
+//        super.computeScroll();
+        if(mScroller.computeScrollOffset()){
+            scrollTo(mScroller.getCurrX(),mScroller.getCurrY());
+            postInvalidate();
+        }
+    }
+
+    //调用此方法滚动到目标位置
+    public void smoothScrollTo(int fx, int fy) {
+        int dx = fx - mScroller.getFinalX();
+        int dy = fy - mScroller.getFinalY();
+        smoothScrollBy(dx, dy);
+    }
+
+    //调用此方法设置滚动的相对偏移
+    public void smoothScrollBy(int dx, int dy) {
+
+        //设置mScroller的滚动偏移量
+        mScroller.startScroll(mScroller.getFinalX(), mScroller.getFinalY(), dx, dy);
+        invalidate();//这里必须调用invalidate()才能保证computeScroll()会被调用，否则不一定会刷新界面，看不到滚动效果
     }
 }
