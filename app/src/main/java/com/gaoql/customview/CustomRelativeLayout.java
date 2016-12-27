@@ -106,7 +106,7 @@ public class CustomRelativeLayout extends RelativeLayout {
             int bottom = circleButton.getBottom();
             int left = circleButton.getLeft();
             int right = circleButton.getRight();
-            Log.e(TAG,top+","+bottom+","+left+","+right);
+//            Log.e(TAG,top+","+bottom+","+left+","+right);
             int width = right - left;
             int height = bottom-top;
             Drawable drawable = circleButton.getDrawable();

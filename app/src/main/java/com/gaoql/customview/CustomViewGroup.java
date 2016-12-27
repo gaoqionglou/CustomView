@@ -218,8 +218,8 @@ public class CustomViewGroup extends ViewGroup {
             int childHeight = childView.getMeasuredHeight();
             MarginLayoutParams clp = (MarginLayoutParams)childView.getLayoutParams();
             w+=childWith+clp.leftMargin+clp.rightMargin;
-            Log.e(TAG,"CHILD onLayout: "+(i+1)+",l-"+(l+w-childWith)+",t-"+t+",r-"+w+",b-"+b);
-            Log.e(TAG,"CHILD onLayout: "+(i+1)+"top-"+childView.getTop()+",bottom-"+childView.getBottom()+",left-"+childView.getLeft()+",right-"+childView.getRight());
+//            Log.e(TAG,"CHILD onLayout: "+(i+1)+",l-"+(l+w-childWith)+",t-"+t+",r-"+w+",b-"+b);
+//            Log.e(TAG,"CHILD onLayout: "+(i+1)+"top-"+childView.getTop()+",bottom-"+childView.getBottom()+",left-"+childView.getLeft()+",right-"+childView.getRight());
             childView.layout(w-childWith,t,w,childHeight);
         }
 

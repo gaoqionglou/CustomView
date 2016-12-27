@@ -1,39 +1,63 @@
-<com.gaoql.customview.CustomRelativeLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
-    android:background="#969696"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/rl"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content" >
-<com.gaoql.customview.CustomViewGroup
-    android:id="@+id/customviewgroup"
-    xmlns:circleButton="http://schemas.android.com/apk/res-auto"
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    >
+    android:layout_height="match_parent">
+    <com.gaoql.customview.SlidingViewGroup
+        android:id="@+id/slidingViewGroup"
+        android:layout_width="match_parent"
+        android:layout_above="@+id/customRelativeLayout"
+        android:layout_height="match_parent">
 
-  <com.gaoql.customview.CircleButton
-      android:id="@+id/btn1"
-      circleButton:radius="30dp"
-      circleButton:backgroundDrawable="@drawable/ic_exposure_plus_2_black_24dp"
-      android:layout_margin="10dp"
-      android:layout_width="wrap_content"
-      android:layout_height="wrap_content"
-      />
-    <com.gaoql.customview.CircleButton
-        android:id="@+id/btn2"
-        circleButton:radius="30dp"
-        circleButton:backgroundDrawable="@drawable/ic_exposure_plus_1_black_24dp"
-        android:layout_margin="10dp"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        />
-    <com.gaoql.customview.CircleButton
-        android:id="@+id/btn3"
-        circleButton:radius="30dp"
-        circleButton:backgroundDrawable="@drawable/ic_exposure_zero_black_24dp"
-        android:layout_margin="10dp"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        />
-</com.gaoql.customview.CustomViewGroup>
+        <ImageView
+            android:layout_width="200dp"
+            android:layout_height="match_parent"
+            android:src="@color/colorPrimaryDark"
+            android:clickable="true"
+            />
+        <ImageView
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:src="@color/colorAccent"
+            android:clickable="true"
+            />
 
-</com.gaoql.customview.CustomRelativeLayout>
+    </com.gaoql.customview.SlidingViewGroup>
+
+    <com.gaoql.customview.CustomRelativeLayout
+        android:id="@+id/customRelativeLayout"
+        android:layout_alignParentBottom="true"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="#969696">
+
+        <com.gaoql.customview.CustomViewGroup xmlns:circleButton="http://schemas.android.com/apk/res-auto"
+            android:id="@+id/customviewgroup"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <com.gaoql.customview.CircleButton
+                android:id="@+id/btn1"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_margin="10dp"
+                circleButton:backgroundDrawable="@drawable/ic_exposure_plus_2_black_24dp"
+                circleButton:radius="30dp" />
+
+            <com.gaoql.customview.CircleButton
+                android:id="@+id/btn2"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_margin="10dp"
+                circleButton:backgroundDrawable="@drawable/ic_exposure_plus_1_black_24dp"
+                circleButton:radius="30dp" />
+
+            <com.gaoql.customview.CircleButton
+                android:id="@+id/btn3"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_margin="10dp"
+                circleButton:backgroundDrawable="@drawable/ic_exposure_zero_black_24dp"
+                circleButton:radius="30dp" />
+        </com.gaoql.customview.CustomViewGroup>
+    </com.gaoql.customview.CustomRelativeLayout>
+</RelativeLayout>
