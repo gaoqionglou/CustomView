@@ -6,7 +6,9 @@ import android.util.AttributeSet;
 import android.util.Log;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
+import android.view.VelocityTracker;
 import android.view.View;
+import android.view.ViewConfiguration;
 import android.view.ViewGroup;
 import android.widget.Scroller;
 
@@ -15,6 +17,9 @@ public class SlidingViewGroup extends ViewGroup implements GestureDetector.OnGes
     public static final String TAG="SlidingViewGroup";
     private GestureDetector gestureDetector ;
     private Scroller mScroller;
+    private VelocityTracker velocityTracker;//速率跟踪器
+    private ViewConfiguration configuration;
+    private int i =1;
     public SlidingViewGroup(Context context) {
         this(context,null);
     }
@@ -37,6 +42,8 @@ public class SlidingViewGroup extends ViewGroup implements GestureDetector.OnGes
         gestureDetector = new GestureDetector(context,this);
         gestureDetector.setIsLongpressEnabled(false);
         mScroller = new Scroller(context);
+        configuration = ViewConfiguration.get(context);
+
     }
 
     /** 1 测试和布局*/
@@ -64,40 +71,50 @@ public class SlidingViewGroup extends ViewGroup implements GestureDetector.OnGes
      * @param heightMode
      */
     private void measure(int widthSize,int heightSize,int widthMode,int heightMode){
+        /**
+         * EXACTLY：表示设置了精确的值，一般当childView设置其宽、高为精确值、match_parent时，ViewGroup会将其设置为EXACTLY；
+         AT_MOST：表示子布局被限制在一个最大值内，一般当childView设置其宽、高为wrap_content时，ViewGroup会将其设置为AT_MOST；
+         UNSPECIFIED：表示子布局想要多大就多大，一般出现在AadapterView的item的heightMode中、ScrollView的childView的heightMode中；此种模式比较少见。
+         */
         int width =0;
         int height = 0;
         if(getChildCount()==0){
             setMeasuredDimension(width,height);
         }
+        int a = MeasureSpec.UNSPECIFIED;
         if(widthMode==MeasureSpec.EXACTLY&&heightMode==MeasureSpec.EXACTLY){
+            //MATCH_PARENT 设置为上层容器推荐的长 宽
+//           Log.e(TAG,"ViewGroup,w-"+widthSize+",h-"+heightSize);
             setMeasuredDimension(widthSize,heightSize);
             return;
+        }
+        if(widthMode==MeasureSpec.AT_MOST&&heightMode==MeasureSpec.AT_MOST){
+            for(int i=0;i<getChildCount();i++){
+                View childView = getChildAt(i);
+                int childWith = childView.getMeasuredWidth();
+                int childHeight = childView.getMeasuredHeight();
+                MarginLayoutParams clp= (MarginLayoutParams)childView.getLayoutParams();
+                width+=childWith+clp.leftMargin+clp.rightMargin;
+                height=Math.max(height,childHeight+clp.topMargin+clp.bottomMargin);
+            }
         }else if(widthMode==MeasureSpec.AT_MOST){
             for(int i=0;i<getChildCount();i++){
-                View v = getChildAt(i);
-                int w = v.getMeasuredWidth();
-                MarginLayoutParams mlp =(MarginLayoutParams) getLayoutParams();
-                width = w+mlp.rightMargin+mlp.leftMargin;
+                View childView = getChildAt(i);
+                int childWith = childView.getMeasuredWidth();
+                MarginLayoutParams clp= (MarginLayoutParams)childView.getLayoutParams();
+                width+=childWith+clp.leftMargin+clp.rightMargin;
             }
             height = heightSize;
         }else if(heightMode==MeasureSpec.AT_MOST){
-            for(int j=0;j<getChildCount();j++){
-                View v = getChildAt(j);
-                int h = v.getMeasuredHeight();
-                MarginLayoutParams mlp =(MarginLayoutParams) getLayoutParams();
-                height = Math.max(height,h+mlp.topMargin+mlp.bottomMargin);
+            for(int i=0;i<getChildCount();i++){
+                View childView = getChildAt(i);
+                int childHeight = childView.getMeasuredHeight();
+                MarginLayoutParams clp= (MarginLayoutParams)childView.getLayoutParams();
+                height=Math.max(height,childHeight+clp.topMargin+clp.bottomMargin);
             }
-            width=widthSize;
-        }else {
-            for(int m=0;m<getChildCount();m++){
-                View v = getChildAt(m);
-                int w = v.getMeasuredWidth();
-                int h = v.getMeasuredHeight();
-                MarginLayoutParams mlp =(MarginLayoutParams) getLayoutParams();
-                width = w+mlp.rightMargin+mlp.leftMargin;
-                height = Math.max(height,h+mlp.topMargin+mlp.bottomMargin);
-            }
+            width = widthSize;
         }
+//        Log.e(TAG,"ViewGroup,w-"+width+",h-"+height);
         setMeasuredDimension(width,height);
     }
 
@@ -110,7 +127,9 @@ public class SlidingViewGroup extends ViewGroup implements GestureDetector.OnGes
             int h = v.getMeasuredHeight();
             MarginLayoutParams mlp = (MarginLayoutParams)getLayoutParams();
             left+=w+mlp.rightMargin+mlp.leftMargin;
-            v.layout(left-w,t,w,h);
+            v.layout(left-w,t,left,h);
+            Log.e(TAG,"CHILD onLayout: "+(n+1)+",l-"+(left-w)+",t-"+t+",r-"+left+",b-"+h);
+
         }
     }
 
@@ -133,12 +152,48 @@ public class SlidingViewGroup extends ViewGroup implements GestureDetector.OnGes
 
     @Override
     public boolean onInterceptTouchEvent(MotionEvent ev) {
+        //暂时不分发事件，自己处理
         return !super.onInterceptTouchEvent(ev);
     }
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
+        obtainVelocityTracker(event);
+        int action = event.getAction();
+        switch (action){
+            case MotionEvent.ACTION_DOWN:
+                break;
+            case MotionEvent.ACTION_UP:
+                //拿x的速度
+                velocityTracker.computeCurrentVelocity(1000);//计算1000ms运动了多少个像素 TODO:这个时间怎么给怎么传？
+                float velocityX = velocityTracker.getXVelocity();
+                //TODO:下面要做手势滑动的距离和这个速率的相关处理
+                break;
+            case MotionEvent.ACTION_MOVE:
+                break;
+            case MotionEvent.ACTION_CANCEL:
+                realseVelocityTracker();
+                break;
+            default:
+                break;
+        }
         return gestureDetector.onTouchEvent(event);
+    }
+
+    /**
+     * 获取速度跟踪器
+     */
+    private void obtainVelocityTracker(MotionEvent event){
+        if(velocityTracker==null){
+            velocityTracker = VelocityTracker.obtain();
+        }
+        velocityTracker.addMovement(event);
+    }
+
+    private void realseVelocityTracker(){
+        if(velocityTracker!=null){
+            velocityTracker.recycle();
+        }
     }
     /** 4 布局  */
     @Override
@@ -175,9 +230,16 @@ public class SlidingViewGroup extends ViewGroup implements GestureDetector.OnGes
 
     @Override
     public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY) {
-        Log.e(TAG,"onScroll");
-        smoothScrollTo(200,0);
-        return true;
+        Log.e(TAG,"e1-"+e1.getX()+","+e1.getY());
+        Log.e(TAG,"e2-"+e2.getX()+","+e2.getY());
+        Log.e(TAG,"distanceX-"+distanceX+",distanceY"+distanceY);
+        int a =  getChildAt(0).getWidth();
+        if(distanceX>0) {
+            smoothScrollBy(200, 0);
+        }else if(distanceX<0){
+            smoothScrollBy(-200, 0);
+        }
+        return false;
     }
 
     @Override
@@ -187,7 +249,7 @@ public class SlidingViewGroup extends ViewGroup implements GestureDetector.OnGes
 
     @Override
     public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
-        Log.e(TAG,"onFling");
+        Log.e(TAG,"onFling velocityX-"+velocityX+",velocityY-"+velocityY);
         return true;
     }
 
@@ -212,6 +274,7 @@ public class SlidingViewGroup extends ViewGroup implements GestureDetector.OnGes
 
         //设置mScroller的滚动偏移量
         mScroller.startScroll(mScroller.getFinalX(), mScroller.getFinalY(), dx, dy);
+        Log.e(TAG,"startScroll "+mScroller.getFinalX()+","+mScroller.getFinalY()+","+dx+","+dy);
         invalidate();//这里必须调用invalidate()才能保证computeScroll()会被调用，否则不一定会刷新界面，看不到滚动效果
     }
 }
