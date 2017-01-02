@@ -20,6 +20,8 @@ public class SlidingViewGroup extends ViewGroup implements GestureDetector.OnGes
     private VelocityTracker velocityTracker;//速率跟踪器
     private ViewConfiguration configuration;
     private int i =1;
+    private float lastX=0;
+    private int offsetX,offsetY;
     public SlidingViewGroup(Context context) {
         this(context,null);
     }
@@ -160,23 +162,30 @@ public class SlidingViewGroup extends ViewGroup implements GestureDetector.OnGes
     public boolean onTouchEvent(MotionEvent event) {
         obtainVelocityTracker(event);
         int action = event.getAction();
+        float x = event.getRawX();
         switch (action){
             case MotionEvent.ACTION_DOWN:
+                offsetX=getScrollX();
+                lastX = x;
                 break;
             case MotionEvent.ACTION_UP:
                 //拿x的速度
                 velocityTracker.computeCurrentVelocity(1000);//计算1000ms运动了多少个像素 TODO:这个时间怎么给怎么传？
                 float velocityX = velocityTracker.getXVelocity();
-                //TODO:下面要做手势滑动的距离和这个速率的相关处理
+                //TODO:要做手势滑动的距离和这个速率的相关处理。
                 break;
             case MotionEvent.ACTION_MOVE:
+                float dx = x-lastX;
+                lastX = x;
+                scrollBy((int)-dx,0);/** */
                 break;
-            case MotionEvent.ACTION_CANCEL:
-                realseVelocityTracker();
+            case MotionEvent.ACTION_CANCEL://TODO:事件被上层拦截时触发。那么用来注销VelocityTracker？
+//                scrollTo(getScrollX(),0);
                 break;
             default:
                 break;
         }
+        realseVelocityTracker();
         return gestureDetector.onTouchEvent(event);
     }
 
@@ -233,12 +242,12 @@ public class SlidingViewGroup extends ViewGroup implements GestureDetector.OnGes
         Log.e(TAG,"e1-"+e1.getX()+","+e1.getY());
         Log.e(TAG,"e2-"+e2.getX()+","+e2.getY());
         Log.e(TAG,"distanceX-"+distanceX+",distanceY"+distanceY);
-        int a =  getChildAt(0).getWidth();
+/*        int a =  getChildAt(0).getWidth();
         if(distanceX>0) {
             smoothScrollBy(200, 0);
         }else if(distanceX<0){
             smoothScrollBy(-200, 0);
-        }
+        }*/
         return false;
     }
 
