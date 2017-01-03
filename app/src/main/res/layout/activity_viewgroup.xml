@@ -12,19 +12,19 @@
         <ImageView
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:background="@drawable/ghoul"
+            android:background="@color/colorAccent"
             android:clickable="true"
             />
         <ImageView
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:background="@drawable/ghoul"
+            android:background="#FFFFFF"
             android:clickable="true"
             />
         <ImageView
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:background="@drawable/ghoul"
+            android:background="@color/colorPrimaryDark"
             android:clickable="true"
             />
 
