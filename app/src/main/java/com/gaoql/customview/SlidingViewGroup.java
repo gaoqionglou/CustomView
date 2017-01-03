@@ -22,6 +22,9 @@ public class SlidingViewGroup extends ViewGroup implements GestureDetector.OnGes
     private int i =1;
     private float lastX=0;
     private int offsetX,offsetY;
+    private int currentPageIndex=0;
+    private float direction = 1f;
+    private float dx;
     public SlidingViewGroup(Context context) {
         this(context,null);
     }
@@ -130,7 +133,7 @@ public class SlidingViewGroup extends ViewGroup implements GestureDetector.OnGes
             MarginLayoutParams mlp = (MarginLayoutParams)getLayoutParams();
             left+=w+mlp.rightMargin+mlp.leftMargin;
             v.layout(left-w,t,left,h);
-            Log.e(TAG,"CHILD onLayout: "+(n+1)+",l-"+(left-w)+",t-"+t+",r-"+left+",b-"+h);
+//            Log.e(TAG,"CHILD onLayout: "+(n+1)+",l-"+(left-w)+",t-"+t+",r-"+left+",b-"+h);
 
         }
     }
@@ -163,29 +166,53 @@ public class SlidingViewGroup extends ViewGroup implements GestureDetector.OnGes
         obtainVelocityTracker(event);
         int action = event.getAction();
         float x = event.getRawX();
+        float ex = event.getX();
+        float ey = event.getY();
         switch (action){
             case MotionEvent.ACTION_DOWN:
+                Log.e(TAG,"onTouchEvent ACTION_DOWN");
+                Log.e(TAG,"onTouchEvent ACTION_DOWN getScrollX - "+getScrollX());
                 offsetX=getScrollX();
                 lastX = x;
                 break;
             case MotionEvent.ACTION_UP:
+                Log.e(TAG,"onTouchEvent ACTION_UP getScrollX - "+getScrollX());
                 //拿x的速度
                 velocityTracker.computeCurrentVelocity(1000);//计算1000ms运动了多少个像素 TODO:这个时间怎么给怎么传？
                 float velocityX = velocityTracker.getXVelocity();
                 //TODO:要做手势滑动的距离和这个速率的相关处理。
+                View childView = getChildAt(0);
+                int width = childView.getRight()-childView.getLeft();
+                if(dx<0) {
+                    if (currentPageIndex < getChildCount() - 1) {
+                        scrollTo((currentPageIndex + 1) * width, 0);
+                        currentPageIndex++;
+                    }
+                }
+                if(dx>0){
+                    if (currentPageIndex >0) {
+                        int num = currentPageIndex - 1==0?1:currentPageIndex - 1;
+                        scrollTo((currentPageIndex - 1)*width, 0);
+                        currentPageIndex--;
+                    }
+                }
                 break;
             case MotionEvent.ACTION_MOVE:
-                float dx = x-lastX;
+                dx = x-lastX;
                 lastX = x;
+
+                if(currentPageIndex==0&&dx>0 || currentPageIndex==getChildCount()-1&&dx<0){
+                    break;
+                }
                 scrollBy((int)-dx,0);/** */
                 break;
             case MotionEvent.ACTION_CANCEL://TODO:事件被上层拦截时触发。那么用来注销VelocityTracker？
+                realseVelocityTracker();
 //                scrollTo(getScrollX(),0);
                 break;
             default:
                 break;
         }
-        realseVelocityTracker();
         return gestureDetector.onTouchEvent(event);
     }
 
@@ -239,9 +266,9 @@ public class SlidingViewGroup extends ViewGroup implements GestureDetector.OnGes
 
     @Override
     public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY) {
-        Log.e(TAG,"e1-"+e1.getX()+","+e1.getY());
+/*        Log.e(TAG,"e1-"+e1.getX()+","+e1.getY());
         Log.e(TAG,"e2-"+e2.getX()+","+e2.getY());
-        Log.e(TAG,"distanceX-"+distanceX+",distanceY"+distanceY);
+        Log.e(TAG,"distanceX-"+distanceX+",distanceY"+distanceY);*/
 /*        int a =  getChildAt(0).getWidth();
         if(distanceX>0) {
             smoothScrollBy(200, 0);
@@ -285,5 +312,30 @@ public class SlidingViewGroup extends ViewGroup implements GestureDetector.OnGes
         mScroller.startScroll(mScroller.getFinalX(), mScroller.getFinalY(), dx, dy);
         Log.e(TAG,"startScroll "+mScroller.getFinalX()+","+mScroller.getFinalY()+","+dx+","+dy);
         invalidate();//这里必须调用invalidate()才能保证computeScroll()会被调用，否则不一定会刷新界面，看不到滚动效果
+    }
+
+    /**
+     *
+     * @param x
+     * @param y
+     * @return
+     */
+    private int getChildViewIndex(float x,float y){
+        int index = -1;
+        for(int i =0;i<getChildCount();i++){
+            View childView  =getChildAt(i);
+            int top = childView.getTop();
+            int bottom = childView.getBottom();
+            int left = childView.getLeft();
+            int right = childView.getRight();
+            boolean inWidth = x>=left&&x<=right;
+            boolean inHeight = y>=top&&y<=bottom;
+            boolean isInChildView = inWidth&&inHeight;
+            if(isInChildView) {
+                index = i;
+                break;
+            }
+        }
+        return index;
     }
 }
