@@ -183,6 +183,7 @@ public class SlidingViewGroup extends ViewGroup implements GestureDetector.OnGes
                 //TODO:要做手势滑动的距离和这个速率的相关处理。
                 View childView = getChildAt(0);
                 int width = childView.getRight()-childView.getLeft();
+                Log.e(TAG,"onTouchEvent ACTION_UP dx - "+dx);
                 if(dx<0) {
                     if (currentPageIndex < getChildCount() - 1) {
                         scrollTo((currentPageIndex + 1) * width, 0);
@@ -198,6 +199,7 @@ public class SlidingViewGroup extends ViewGroup implements GestureDetector.OnGes
                 }
                 break;
             case MotionEvent.ACTION_MOVE:
+                Log.e(TAG,"onTouchEvent ACTION_MOVE dx - "+dx+",x - "+x+",lastX - "+lastX);
                 dx = x-lastX;
                 lastX = x;
 
