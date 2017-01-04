@@ -23,6 +23,9 @@ public class SlidingViewGroup extends ViewGroup implements GestureDetector.OnGes
     private float lastX=0;
     private int offsetX,offsetY;
     private int currentPageIndex=0;
+    private int minScrollDistance = 0;
+    private int minFlingVelocity = 0;
+    private int minScrollVer = 0;
     private float direction = 1f;
     private float dx;
     public SlidingViewGroup(Context context) {
@@ -48,6 +51,8 @@ public class SlidingViewGroup extends ViewGroup implements GestureDetector.OnGes
         gestureDetector.setIsLongpressEnabled(false);
         mScroller = new Scroller(context);
         configuration = ViewConfiguration.get(context);
+        minScrollDistance =  configuration.getScaledTouchSlop();
+        minFlingVelocity = configuration.getScaledMinimumFlingVelocity();
 
     }
 
@@ -176,7 +181,7 @@ public class SlidingViewGroup extends ViewGroup implements GestureDetector.OnGes
                 lastX = x;
                 break;
             case MotionEvent.ACTION_UP:
-                Log.e(TAG,"onTouchEvent ACTION_UP getScrollX - "+getScrollX());
+ /*               Log.e(TAG,"onTouchEvent ACTION_UP getScrollX - "+getScrollX());
                 //拿x的速度
                 velocityTracker.computeCurrentVelocity(1000);//计算1000ms运动了多少个像素 TODO:这个时间怎么给怎么传？
                 float velocityX = velocityTracker.getXVelocity();
@@ -196,11 +201,11 @@ public class SlidingViewGroup extends ViewGroup implements GestureDetector.OnGes
                         scrollTo((currentPageIndex - 1)*width, 0);
                         currentPageIndex--;
                     }
-                }
+                }*/
                 break;
             case MotionEvent.ACTION_MOVE:
-                Log.e(TAG,"onTouchEvent ACTION_MOVE dx - "+dx+",x - "+x+",lastX - "+lastX);
                 dx = x-lastX;
+//                Log.e(TAG,"onTouchEvent ACTION_MOVE dx - "+dx+",x - "+x+",lastX - "+lastX);
                 lastX = x;
 
                 if(currentPageIndex==0&&dx>0 || currentPageIndex==getChildCount()-1&&dx<0){
@@ -249,6 +254,23 @@ public class SlidingViewGroup extends ViewGroup implements GestureDetector.OnGes
         return new MarginLayoutParams(LayoutParams.MATCH_PARENT,LayoutParams.MATCH_PARENT);
     }
 
+    /**
+     * 具体地说，典型的触屏事件及其listener执行的流程见下：
+
+     1). 单击事件的执行流程：
+     有两种情况，一种是时间很短，一种时间稍长。
+     时间很短：onDown ----> onSingleTapUp ----> onSingleTapConfirmed
+     时间稍长：onDown ----> onShowPress   ----> onSingleTapUp ----> onSingleTapConfirmed
+
+     2). 长按事件
+     onDown ----> onShowPress ----> onLongPress
+     3.抛(fling)：手指触动屏幕后，稍微滑动后立即松开:
+     onDown ----> onScroll ----> onScroll ----> onScroll ----> ………  ----> onFling
+     4.拖动(drag)
+     onDown ----> onScroll ----> onScroll ----> onFiling
+     注意：有的时候会触发onFiling，但是有的时候不会触发，这是因为人的动作不标准所致。
+     */
+
     @Override
     public boolean onDown(MotionEvent e) {
         Log.e(TAG,"onDown");
@@ -268,9 +290,9 @@ public class SlidingViewGroup extends ViewGroup implements GestureDetector.OnGes
 
     @Override
     public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY) {
-/*        Log.e(TAG,"e1-"+e1.getX()+","+e1.getY());
+       Log.e(TAG,"e1-"+e1.getX()+","+e1.getY());
         Log.e(TAG,"e2-"+e2.getX()+","+e2.getY());
-        Log.e(TAG,"distanceX-"+distanceX+",distanceY"+distanceY);*/
+        Log.e(TAG,"distanceX-"+distanceX+",distanceY"+distanceY);
 /*        int a =  getChildAt(0).getWidth();
         if(distanceX>0) {
             smoothScrollBy(200, 0);
@@ -288,6 +310,25 @@ public class SlidingViewGroup extends ViewGroup implements GestureDetector.OnGes
     @Override
     public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
         Log.e(TAG,"onFling velocityX-"+velocityX+",velocityY-"+velocityY);
+        View childView = getChildAt(0);
+        int width = childView.getRight()-childView.getLeft();
+        float distanceX = e2.getX()-e1.getX();
+        if(Math.abs(distanceX)>=minScrollDistance) {
+            if (distanceX < 0) {
+                if (currentPageIndex < getChildCount() - 1) {
+                    smoothScrollBy((currentPageIndex + 1) * width, 0);
+                    currentPageIndex++;
+                }
+            }
+            if (distanceX > 0) {
+                if (currentPageIndex > 0) {
+                    int num = currentPageIndex - 1 == 0 ? 1 : currentPageIndex - 1;
+                    smoothScrollBy((currentPageIndex - 1) * width, 0);
+                    currentPageIndex--;
+                }
+            }
+        }
+
         return true;
     }
 
@@ -300,19 +341,12 @@ public class SlidingViewGroup extends ViewGroup implements GestureDetector.OnGes
         }
     }
 
-    //调用此方法滚动到目标位置
-    public void smoothScrollTo(int fx, int fy) {
-        int dx = fx - mScroller.getFinalX();
-        int dy = fy - mScroller.getFinalY();
-        smoothScrollBy(dx, dy);
-    }
-
     //调用此方法设置滚动的相对偏移
     public void smoothScrollBy(int dx, int dy) {
-
+        int scrollX = getScrollX();
+        int deltaX = dx - scrollX;
         //设置mScroller的滚动偏移量
-        mScroller.startScroll(mScroller.getFinalX(), mScroller.getFinalY(), dx, dy);
-        Log.e(TAG,"startScroll "+mScroller.getFinalX()+","+mScroller.getFinalY()+","+dx+","+dy);
+        mScroller.startScroll(scrollX, 0, deltaX, 0,1000);
         invalidate();//这里必须调用invalidate()才能保证computeScroll()会被调用，否则不一定会刷新界面，看不到滚动效果
     }
 
