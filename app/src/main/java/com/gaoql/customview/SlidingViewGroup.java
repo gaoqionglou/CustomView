@@ -181,31 +181,19 @@ public class SlidingViewGroup extends ViewGroup implements GestureDetector.OnGes
                 lastX = x;
                 break;
             case MotionEvent.ACTION_UP:
- /*               Log.e(TAG,"onTouchEvent ACTION_UP getScrollX - "+getScrollX());
-                //拿x的速度
-                velocityTracker.computeCurrentVelocity(1000);//计算1000ms运动了多少个像素 TODO:这个时间怎么给怎么传？
-                float velocityX = velocityTracker.getXVelocity();
-                //TODO:要做手势滑动的距离和这个速率的相关处理。
-                View childView = getChildAt(0);
+                Log.e(TAG,"onTouchEvent ACTION_UP getScrollX - "+getScrollX());
+/*                View childView = getChildAt(0);
                 int width = childView.getRight()-childView.getLeft();
-                Log.e(TAG,"onTouchEvent ACTION_UP dx - "+dx);
-                if(dx<0) {
-                    if (currentPageIndex < getChildCount() - 1) {
-                        scrollTo((currentPageIndex + 1) * width, 0);
-                        currentPageIndex++;
-                    }
-                }
-                if(dx>0){
-                    if (currentPageIndex >0) {
-                        int num = currentPageIndex - 1==0?1:currentPageIndex - 1;
-                        scrollTo((currentPageIndex - 1)*width, 0);
-                        currentPageIndex--;
-                    }
+                int half = width/2;
+                int scrollX =  getScrollX();
+                if(scrollX/width!=0){
+                    int dx = scrollX-width;
+                    smoothScrollBy(dx,0);
                 }*/
                 break;
             case MotionEvent.ACTION_MOVE:
                 dx = x-lastX;
-//                Log.e(TAG,"onTouchEvent ACTION_MOVE dx - "+dx+",x - "+x+",lastX - "+lastX);
+                Log.e(TAG,"onTouchEvent ACTION_MOVE dx - "+dx+",x - "+x+",lastX - "+lastX);
                 lastX = x;
 
                 if(currentPageIndex==0&&dx>0 || currentPageIndex==getChildCount()-1&&dx<0){
@@ -268,7 +256,7 @@ public class SlidingViewGroup extends ViewGroup implements GestureDetector.OnGes
      onDown ----> onScroll ----> onScroll ----> onScroll ----> ………  ----> onFling
      4.拖动(drag)
      onDown ----> onScroll ----> onScroll ----> onFiling
-     注意：有的时候会触发onFiling，但是有的时候不会触发，这是因为人的动作不标准所致。
+     TODO:--注意：有的时候会触发onFiling，但是有的时候不会触发，这是因为人的动作不标准所致。
      */
 
     @Override
@@ -314,19 +302,22 @@ public class SlidingViewGroup extends ViewGroup implements GestureDetector.OnGes
         int width = childView.getRight()-childView.getLeft();
         float distanceX = e2.getX()-e1.getX();
         if(Math.abs(distanceX)>=minScrollDistance) {
+            Log.e(TAG,"before--"+currentPageIndex);
             if (distanceX < 0) {
                 if (currentPageIndex < getChildCount() - 1) {
-                    smoothScrollBy((currentPageIndex + 1) * width, 0);
+//                    smoothScrollBy((currentPageIndex + 1) * width, 0);
+                    scrollByVelocity((currentPageIndex + 1) * width, 0,velocityX,velocityY);
                     currentPageIndex++;
                 }
             }
             if (distanceX > 0) {
                 if (currentPageIndex > 0) {
-                    int num = currentPageIndex - 1 == 0 ? 1 : currentPageIndex - 1;
-                    smoothScrollBy((currentPageIndex - 1) * width, 0);
+//                    smoothScrollBy((currentPageIndex - 1) * width, 0);
+                    scrollByVelocity((currentPageIndex - 1) * width, 0,velocityX,velocityY);
                     currentPageIndex--;
                 }
             }
+            Log.e(TAG,"after--"+currentPageIndex);
         }
 
         return true;
@@ -341,12 +332,30 @@ public class SlidingViewGroup extends ViewGroup implements GestureDetector.OnGes
         }
     }
 
-    //调用此方法设置滚动的相对偏移
+    /**
+     * 缓慢滑动
+     * @param dx
+     * @param dy
+     */
     public void smoothScrollBy(int dx, int dy) {
         int scrollX = getScrollX();
         int deltaX = dx - scrollX;
-        //设置mScroller的滚动偏移量
+        //设置mScroller的滚动偏移量,从当前的偏移位置移动到deltaX的位置
         mScroller.startScroll(scrollX, 0, deltaX, 0,1000);
+        invalidate();//这里必须调用invalidate()才能保证computeScroll()会被调用，否则不一定会刷新界面，看不到滚动效果
+    }
+
+    /**
+     * 以手指滑动速度去滑动,
+     * @param dx
+     * @param dy
+     */
+    public void scrollByVelocity(int dx, int dy, float velocityX, float velocityY) {
+        int scrollX = getScrollX();
+        int deltaX = dx - scrollX;
+        float time = Math.abs(deltaX)*1000f/Math.abs(velocityX);
+        //设置mScroller的滚动偏移量,从当前的偏移位置移动到deltaX的位置
+        mScroller.startScroll(scrollX, 0, deltaX, 0,(int)time);
         invalidate();//这里必须调用invalidate()才能保证computeScroll()会被调用，否则不一定会刷新界面，看不到滚动效果
     }
 
