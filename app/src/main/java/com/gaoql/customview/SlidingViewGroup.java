@@ -28,6 +28,7 @@ public class SlidingViewGroup extends ViewGroup implements GestureDetector.OnGes
     private int minScrollVer = 0;
     private float direction = 1f;
     private float dx;
+    private boolean isOnFling = false;
     public SlidingViewGroup(Context context) {
         this(context,null);
     }
@@ -182,14 +183,21 @@ public class SlidingViewGroup extends ViewGroup implements GestureDetector.OnGes
                 break;
             case MotionEvent.ACTION_UP:
                 Log.e(TAG,"onTouchEvent ACTION_UP getScrollX - "+getScrollX());
-/*                View childView = getChildAt(0);
+                View childView = getChildAt(0);
                 int width = childView.getRight()-childView.getLeft();
-                int half = width/2;
                 int scrollX =  getScrollX();
-                if(scrollX/width!=0){
-                    int dx = scrollX-width;
-                    smoothScrollBy(dx,0);
-                }*/
+                int delta = scrollX - offsetX;
+                velocityTracker.computeCurrentVelocity(1000, configuration.getScaledMaximumFlingVelocity());
+                float velocityX = velocityTracker.getXVelocity();
+                if(Math.abs(delta)<width/3){
+                    Log.e(TAG,"onTouchEvent ACTION_UP back 1  ");
+                    mScroller.startScroll(scrollX, 0, -delta, 0,1000);
+                    invalidate();
+                }else if(velocityX<=configuration.getScaledMinimumFlingVelocity()){
+                    Log.e(TAG,"onTouchEvent ACTION_UP back 2  ");
+                    mScroller.startScroll(scrollX, 0, -delta, 0,1000);
+                    invalidate();
+                }
                 break;
             case MotionEvent.ACTION_MOVE:
                 dx = x-lastX;
@@ -257,6 +265,11 @@ public class SlidingViewGroup extends ViewGroup implements GestureDetector.OnGes
      4.拖动(drag)
      onDown ----> onScroll ----> onScroll ----> onFiling
      TODO:--注意：有的时候会触发onFiling，但是有的时候不会触发，这是因为人的动作不标准所致。
+     GestureDetector的源码里面，当if ((Math.abs(velocityY) > mMinimumFlingVelocity)
+     || (Math.abs(velocityX) > mMinimumFlingVelocity)){
+     handled = mListener.onFling(mCurrentDownEvent, ev, velocityX, velocityY);
+     }
+     速度太慢导致无法触发onFling
      */
 
     @Override
@@ -301,6 +314,11 @@ public class SlidingViewGroup extends ViewGroup implements GestureDetector.OnGes
         View childView = getChildAt(0);
         int width = childView.getRight()-childView.getLeft();
         float distanceX = e2.getX()-e1.getX();
+        int delta = getScrollX() - offsetX;
+        if(Math.abs(delta)<width/3){
+            Log.e(TAG,"onFling donothing");
+            return true;
+        }
         if(Math.abs(distanceX)>=minScrollDistance) {
             Log.e(TAG,"before--"+currentPageIndex);
             if (distanceX < 0) {
