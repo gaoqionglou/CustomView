@@ -187,15 +187,27 @@ public class SlidingViewGroup extends ViewGroup implements GestureDetector.OnGes
                 int width = childView.getRight()-childView.getLeft();
                 int scrollX =  getScrollX();
                 int delta = scrollX - offsetX;
+                //计算出一秒移动1000像素的速率 1000 表示每秒多少像素（pix/second),1代表每微秒多少像素（pix/millisecond)
                 velocityTracker.computeCurrentVelocity(1000, configuration.getScaledMaximumFlingVelocity());
                 float velocityX = velocityTracker.getXVelocity();
+                //TODO:暂时用子View的三分之一，后续改成屏幕的三分一
                 if(Math.abs(delta)<width/3){
                     Log.e(TAG,"onTouchEvent ACTION_UP back 1  ");
                     mScroller.startScroll(scrollX, 0, -delta, 0,1000);
                     invalidate();
                 }else if(velocityX<=configuration.getScaledMinimumFlingVelocity()){
+                    //当速度小于系统速度，但过了三分一的距离，此时应该滑动一页
                     Log.e(TAG,"onTouchEvent ACTION_UP back 2  ");
-                    mScroller.startScroll(scrollX, 0, -delta, 0,1000);
+                    if(Math.signum(delta)>0){ //左滑趋势
+                        Log.e(TAG,"onTouchEvent ACTION_UP back 2-1  ");
+                        int dx = width - delta;
+                        mScroller.startScroll(scrollX, 0, dx, 0,1000);
+                    }else{//右滑趋势
+                        Log.e(TAG,"onTouchEvent ACTION_UP back 2-2  ");
+                        int dx = -width + delta;
+                        mScroller.startScroll(scrollX, 0, dx, 0,1000);
+                    }
+//                    mScroller.startScroll(scrollX, 0, -delta, 0,1000);
                     invalidate();
                 }
                 break;
