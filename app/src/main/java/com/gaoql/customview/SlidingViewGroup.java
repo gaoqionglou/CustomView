@@ -29,6 +29,7 @@ public class SlidingViewGroup extends ViewGroup implements GestureDetector.OnGes
     private float direction = 1f;
     private float dx;
     private boolean isOnFling = false;
+    private boolean isFirst = true;
     public SlidingViewGroup(Context context) {
         this(context,null);
     }
@@ -190,30 +191,50 @@ public class SlidingViewGroup extends ViewGroup implements GestureDetector.OnGes
                 //计算出一秒移动1000像素的速率 1000 表示每秒多少像素（pix/second),1代表每微秒多少像素（pix/millisecond)
                 velocityTracker.computeCurrentVelocity(1000, configuration.getScaledMaximumFlingVelocity());
                 float velocityX = velocityTracker.getXVelocity();
+                float velocityY = velocityTracker.getYVelocity();
                 //TODO:暂时用子View的三分之一，后续改成屏幕的三分一
                 if(Math.abs(delta)<width/3){
                     Log.e(TAG,"onTouchEvent ACTION_UP back 1  ");
                     mScroller.startScroll(scrollX, 0, -delta, 0,1000);
                     invalidate();
-                }else if(velocityX<=configuration.getScaledMinimumFlingVelocity()){
+                }else if(Math.abs(velocityX)<=configuration.getScaledMinimumFlingVelocity()&&Math.abs(velocityY)<=configuration.getScaledMinimumFlingVelocity()){
                     //当速度小于系统速度，但过了三分一的距离，此时应该滑动一页
                     Log.e(TAG,"onTouchEvent ACTION_UP back 2  ");
-                    if(Math.signum(delta)>0){ //左滑趋势
-                        Log.e(TAG,"onTouchEvent ACTION_UP back 2-1  ");
+                    if(isFirst){
+                        Log.e(TAG,"onTouchEvent ACTION_UP back 2-0  ");
+                        isFirst=false;
+                        currentPageIndex++;
                         int dx = width - delta;
-                        mScroller.startScroll(scrollX, 0, dx, 0,1000);
-                    }else{//右滑趋势
-                        Log.e(TAG,"onTouchEvent ACTION_UP back 2-2  ");
-                        int dx = -width + delta;
-                        mScroller.startScroll(scrollX, 0, dx, 0,1000);
+                        mScroller.startScroll(scrollX, 0, dx, 0, 1000);
+                        invalidate();
+                        break;
+                    }
+
+                    if(Math.signum(delta)>0){ //右滑趋势
+                        if(currentPageIndex >0) {
+                            currentPageIndex--;
+                            isFirst=false;
+                            Log.e(TAG, "onTouchEvent ACTION_UP back 2-1  ");
+                            int dx = width - delta;
+                            mScroller.startScroll(scrollX, 0, dx, 0, 1000);
+                            invalidate();
+                        }
+                    }else{//左滑趋势
+                        if(currentPageIndex < getChildCount() - 1) {
+                            isFirst=false;
+                            currentPageIndex++;
+                            Log.e(TAG, "onTouchEvent ACTION_UP back 2-2  ");
+                            int dx = width + delta;
+                            mScroller.startScroll(scrollX, 0, -dx, 0, 1000);
+                            invalidate();
+                        }
                     }
 //                    mScroller.startScroll(scrollX, 0, -delta, 0,1000);
-                    invalidate();
                 }
                 break;
             case MotionEvent.ACTION_MOVE:
                 dx = x-lastX;
-                Log.e(TAG,"onTouchEvent ACTION_MOVE dx - "+dx+",x - "+x+",lastX - "+lastX);
+                Log.e(TAG,"onTouchEvent ACTION_MOVE dx - "+dx+",x - "+x+",lastX - "+lastX+",currentPageIndex--"+currentPageIndex);
                 lastX = x;
 
                 if(currentPageIndex==0&&dx>0 || currentPageIndex==getChildCount()-1&&dx<0){
@@ -303,9 +324,9 @@ public class SlidingViewGroup extends ViewGroup implements GestureDetector.OnGes
 
     @Override
     public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY) {
-       Log.e(TAG,"e1-"+e1.getX()+","+e1.getY());
-        Log.e(TAG,"e2-"+e2.getX()+","+e2.getY());
-        Log.e(TAG,"distanceX-"+distanceX+",distanceY"+distanceY);
+//       Log.e(TAG,"e1-"+e1.getX()+","+e1.getY());
+//        Log.e(TAG,"e2-"+e2.getX()+","+e2.getY());
+//        Log.e(TAG,"distanceX-"+distanceX+",distanceY"+distanceY);
 /*        int a =  getChildAt(0).getWidth();
         if(distanceX>0) {
             smoothScrollBy(200, 0);
@@ -335,6 +356,7 @@ public class SlidingViewGroup extends ViewGroup implements GestureDetector.OnGes
             Log.e(TAG,"before--"+currentPageIndex);
             if (distanceX < 0) {
                 if (currentPageIndex < getChildCount() - 1) {
+                    isFirst=false;
 //                    smoothScrollBy((currentPageIndex + 1) * width, 0);
                     scrollByVelocity((currentPageIndex + 1) * width, 0,velocityX,velocityY);
                     currentPageIndex++;
@@ -342,6 +364,7 @@ public class SlidingViewGroup extends ViewGroup implements GestureDetector.OnGes
             }
             if (distanceX > 0) {
                 if (currentPageIndex > 0) {
+                    isFirst=false;
 //                    smoothScrollBy((currentPageIndex - 1) * width, 0);
                     scrollByVelocity((currentPageIndex - 1) * width, 0,velocityX,velocityY);
                     currentPageIndex--;
