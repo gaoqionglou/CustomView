@@ -8,20 +8,26 @@ import android.view.View;
 
 import com.gaoql.customview.CircleButton;
 import com.gaoql.customview.CustomViewGroup;
+import com.gaoql.customview.SlidingViewGroup;
 
 
 public class ViewGroupActivity extends AppCompatActivity implements View.OnTouchListener,View.OnClickListener{
     public static final String TAG="GAOVG-ViewGroupActivity";
     private CircleButton btn1,btn2,btn3;
     private CustomViewGroup customViewGroup;
+    SlidingViewGroup slidingViewGroup;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_viewgroup);
         customViewGroup=(CustomViewGroup)findViewById(R.id.customviewgroup);
+        slidingViewGroup = (SlidingViewGroup)findViewById(R.id.slidingViewGroup);
         btn1= (CircleButton)findViewById(R.id.btn1);
         btn2= (CircleButton)findViewById(R.id.btn2);
         btn3= (CircleButton)findViewById(R.id.btn3);
+        btn1.setAttachView(slidingViewGroup);
+        btn2.setAttachView(slidingViewGroup);
+        btn3.setAttachView(slidingViewGroup);
         btn1.setOnTouchListener(this);
         btn2.setOnTouchListener(this);
         btn3.setOnTouchListener(this);

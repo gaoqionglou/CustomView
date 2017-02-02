@@ -58,6 +58,14 @@ public class SlidingViewGroup extends ViewGroup implements GestureDetector.OnGes
 
     }
 
+    public int getCurrentPageIndex() {
+        return currentPageIndex;
+    }
+
+    public void setCurrentPageIndex(int currentPageIndex) {
+        this.currentPageIndex = currentPageIndex;
+    }
+
     /** 1 测试和布局*/
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
@@ -194,6 +202,7 @@ public class SlidingViewGroup extends ViewGroup implements GestureDetector.OnGes
                 float velocityY = velocityTracker.getYVelocity();
                 //TODO:暂时用子View的三分之一，后续改成屏幕的三分一
                 if(Math.abs(delta)<width/3){
+                    /** 小于三分之一，弹回去 */
                     Log.e(TAG,"onTouchEvent ACTION_UP back 1  ");
                     mScroller.startScroll(scrollX, 0, -delta, 0,1000);
                     invalidate();
@@ -210,19 +219,19 @@ public class SlidingViewGroup extends ViewGroup implements GestureDetector.OnGes
                         break;
                     }
 
-                    if(Math.signum(delta)>0){ //右滑趋势
+                    if(Math.signum(delta)>0){ //左滑趋势
                         if(currentPageIndex >0) {
-                            currentPageIndex--;
+                            currentPageIndex++;
                             isFirst=false;
                             Log.e(TAG, "onTouchEvent ACTION_UP back 2-1  ");
                             int dx = width - delta;
                             mScroller.startScroll(scrollX, 0, dx, 0, 1000);
                             invalidate();
                         }
-                    }else{//左滑趋势
-                        if(currentPageIndex < getChildCount() - 1) {
+                    }else{//右滑趋势
+                        if(currentPageIndex < getChildCount()) {
                             isFirst=false;
-                            currentPageIndex++;
+                            currentPageIndex--;
                             Log.e(TAG, "onTouchEvent ACTION_UP back 2-2  ");
                             int dx = width + delta;
                             mScroller.startScroll(scrollX, 0, -dx, 0, 1000);
@@ -410,6 +419,41 @@ public class SlidingViewGroup extends ViewGroup implements GestureDetector.OnGes
         //设置mScroller的滚动偏移量,从当前的偏移位置移动到deltaX的位置
         mScroller.startScroll(scrollX, 0, deltaX, 0,(int)time);
         invalidate();//这里必须调用invalidate()才能保证computeScroll()会被调用，否则不一定会刷新界面，看不到滚动效果
+    }
+
+    /**
+     * 下一页，向左
+     */
+    private void moveToNextPage(){
+        View childView = getChildAt(0);
+        int width = childView.getRight()-childView.getLeft();
+        int scrollX =  getScrollX();
+        currentPageIndex++;
+        mScroller.startScroll(scrollX, 0, width, 0, 1000);
+        invalidate();
+    }
+
+    /**
+     * 上一页，向右
+     */
+    private void moveToPrePage(){
+        View childView = getChildAt(0);
+        int width = childView.getRight()-childView.getLeft();
+        int scrollX =  getScrollX();
+        currentPageIndex--;
+        mScroller.startScroll(scrollX, 0, -width, 0, 1000);
+        invalidate();
+    }
+
+    public void moveTo(int currentPageIndex,int targetPageIndex){
+        View childView = getChildAt(0);
+        int width = childView.getRight()-childView.getLeft();
+        int scrollX =  getScrollX();
+        int diff = targetPageIndex - currentPageIndex;
+        this.currentPageIndex = targetPageIndex;
+         direction =  Math.signum(diff);
+        mScroller.startScroll(scrollX, 0,diff *width, 0, 1000);
+        invalidate();
     }
 
     /**

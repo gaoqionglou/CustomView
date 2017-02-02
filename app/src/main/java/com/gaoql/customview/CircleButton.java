@@ -43,6 +43,7 @@ public class CircleButton extends View {
     private int mBackgroud=0;
     private Animation animation;
     private Drawable mDrawable;
+    private View attachView=null;
     public CircleButton(Context context) {
         this(context,null);
     }
@@ -84,6 +85,13 @@ public class CircleButton extends View {
         init();
     }
 
+    public View getAttachView() {
+        return attachView;
+    }
+
+    public void setAttachView(View attachView) {
+        this.attachView = attachView;
+    }
 
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
@@ -210,7 +218,12 @@ public class CircleButton extends View {
 //                Log.e(TAG,"onTouchEvent ACTION_MOVE");
                 break;
             case MotionEvent.ACTION_UP:
-//                Log.e(TAG,"onTouchEvent ACTION_UP");
+                SlidingViewGroup slidingViewGroup = (SlidingViewGroup)getAttachView();
+                int pageIndex = slidingViewGroup.getCurrentPageIndex();
+                CustomViewGroup parent = (CustomViewGroup)getParent();
+                int childIndex =  parent.indexOfChild(this);
+                Log.e(TAG,"onTouchEvent ACTION_UP "+pageIndex+" moveTo "+childIndex);
+                slidingViewGroup.moveTo(pageIndex,childIndex);
                 break;
         }
         return super.onTouchEvent(event);
@@ -258,27 +271,14 @@ public class CircleButton extends View {
     }
 
     public static Bitmap drawableToBitmap(Drawable drawable) {
-
-
         Bitmap bitmap = Bitmap.createBitmap(
-
                 drawable.getIntrinsicWidth(),
-
                 drawable.getIntrinsicHeight(),
-
-                drawable.getOpacity() != PixelFormat.OPAQUE ? Bitmap.Config.ARGB_8888
-
-                        : Bitmap.Config.RGB_565);
-
+                drawable.getOpacity() != PixelFormat.OPAQUE ? Bitmap.Config.ARGB_8888 : Bitmap.Config.RGB_565);
         Canvas canvas = new Canvas(bitmap);
-
         //canvas.setBitmap(bitmap);
-
         drawable.setBounds(0, 0, drawable.getIntrinsicWidth(), drawable.getIntrinsicHeight());
-
         drawable.draw(canvas);
-
         return bitmap;
-
     }
 }
