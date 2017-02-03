@@ -206,14 +206,13 @@ public class SlidingViewGroup extends ViewGroup implements GestureDetector.OnGes
         float ey = event.getY();
         switch (action){
             case MotionEvent.ACTION_DOWN:
-                Log.e(TAG,"onTouchEvent ACTION_DOWN");
-                Log.e(TAG,"onTouchEvent ACTION_DOWN getScrollX - "+getScrollX());
+//                Log.e(TAG,"onTouchEvent ACTION_DOWN");
+//                Log.e(TAG,"onTouchEvent ACTION_DOWN getScrollX - "+getScrollX());
                 offsetX=getScrollX();
                 lastX = x;
                 break;
             case MotionEvent.ACTION_UP:
-//                indicator.addChildViewCenterPointToQueue(currentPageIndex);
-                Log.e(TAG,"onTouchEvent ACTION_UP getScrollX - "+getScrollX());
+//                Log.e(TAG,"onTouchEvent ACTION_UP getScrollX - "+getScrollX());
                 View childView = getChildAt(0);
                 int width = childView.getRight()-childView.getLeft();
                 int scrollX =  getScrollX();
@@ -269,7 +268,7 @@ public class SlidingViewGroup extends ViewGroup implements GestureDetector.OnGes
                 break;
             case MotionEvent.ACTION_MOVE:
                 dx = x-lastX;
-                Log.e(TAG,"onTouchEvent ACTION_MOVE dx - "+dx+",x - "+x+",lastX - "+lastX+",currentPageIndex--"+currentPageIndex);
+//                Log.e(TAG,"onTouchEvent ACTION_MOVE dx - "+dx+",x - "+x+",lastX - "+lastX+",currentPageIndex--"+currentPageIndex);
                 lastX = x;
 
                 if(currentPageIndex==0&&dx>0 || currentPageIndex==getChildCount()-1&&dx<0){
@@ -384,7 +383,10 @@ public class SlidingViewGroup extends ViewGroup implements GestureDetector.OnGes
         float distanceX = e2.getX()-e1.getX();
         int delta = getScrollX() - offsetX;
         if(Math.abs(delta)<width/3){
+            //弹回
             Log.e(TAG,"onFling donothing");
+            mScroller.startScroll(getScrollX(), 0, -delta, 0,1000);
+            invalidate();
             return true;
         }
         if(Math.abs(distanceX)>=minScrollDistance) {

@@ -1,6 +1,8 @@
 package com.gaoql;
 
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.MotionEvent;
@@ -16,6 +18,15 @@ public class ViewGroupActivity extends AppCompatActivity implements View.OnTouch
     private CircleButton btn1,btn2,btn3;
     private CustomViewGroup customViewGroup;
     SlidingViewGroup slidingViewGroup;
+    private Handler handler = new Handler(){
+        @Override
+        public void handleMessage(Message msg) {
+            super.handleMessage(msg);
+            if(msg.what==0){
+                customViewGroup.showTheFirst();
+            }
+        }
+    };
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -32,6 +43,12 @@ public class ViewGroupActivity extends AppCompatActivity implements View.OnTouch
         btn1.setOnClickListener(this);
         btn2.setOnClickListener(this);
         btn3.setOnClickListener(this);
+        handler.sendEmptyMessageDelayed(0,200);
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
     }
 
     @Override

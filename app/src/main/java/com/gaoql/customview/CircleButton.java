@@ -223,7 +223,7 @@ public class CircleButton extends View {
                 int pageIndex = slidingViewGroup.getCurrentPageIndex();
                 CustomViewGroup parent = (CustomViewGroup)getParent();
                 int childIndex =  parent.indexOfChild(this);
-                Log.e(TAG,"onTouchEvent ACTION_UP "+pageIndex+" moveTo "+childIndex);
+                Log.i(TAG,"onTouchEvent ACTION_UP "+pageIndex+" moveTo "+childIndex);
                 slidingViewGroup.moveTo(pageIndex,childIndex);
                 break;
         }

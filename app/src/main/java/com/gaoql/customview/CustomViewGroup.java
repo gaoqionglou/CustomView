@@ -22,6 +22,7 @@ import android.view.animation.Transformation;
 import com.gaoql.R;
 
 import java.util.Arrays;
+import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -767,6 +768,7 @@ public class CustomViewGroup extends ViewGroup {
      * @return
      */
     public PointF addChildViewCenterPointToQueue(int index){
+        Log.i(TAG,"ps 1-"+pointLimitQueue.queue.toString());
         View childView= getChildAt(index);
         int top = childView.getTop();
         int bottom = childView.getBottom();
@@ -776,7 +778,14 @@ public class CustomViewGroup extends ViewGroup {
         p.x = left+(right - left)/2f;
         p.y = top+(bottom - top)/2f;
         pointLimitQueue.offer(p);
+        Log.i(TAG,"ps 2-"+pointLimitQueue.queue.toString());
         return p;
+    }
+
+    public void showTheFirst(){
+        addChildViewCenterPointToQueue(0);
+        invalidate();
+        //第一次的起点加入了一个点，往后流程的不再需要了，所以poll掉第一个，保持后面的代码通畅
     }
 
     @Override
@@ -817,6 +826,12 @@ public class CustomViewGroup extends ViewGroup {
             if(queue.size() >= limit){
                 queue.poll();
             }
+            if(queue.size()==1){
+                if(queue.getFirst().equals(e)){
+                    Log.i(TAG,"equals");
+                    return;
+                }
+            }
             queue.offer(e);
         }
 
@@ -856,7 +871,7 @@ public class CustomViewGroup extends ViewGroup {
         @Override
         protected void applyTransformation(float interpolatedTime, Transformation t) {
             super.applyTransformation(interpolatedTime, t);
-            Log.e(TAG,"interpolatedTime "+interpolatedTime);
+//            Log.e(TAG,"interpolatedTime "+interpolatedTime);
             mInterpolatedTime=interpolatedTime;
             if(mInterpolatedTime>0){
                 state = STATE_START;
