@@ -115,6 +115,7 @@ public class CircleButton extends View {
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
+        /** 边界 */
         canvas.drawCircle(mWidth/2,getRadius(),getRadius(),borderPaint);
 /*        if (mBackgroud == 0) {
             mBackgroudColor = mBackgroudColor == 0 ? Color.WHITE : mBackgroudColor;// TODO:构造函数里面默认给了白色，为什么是0啊喂！

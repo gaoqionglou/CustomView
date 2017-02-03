@@ -25,9 +25,7 @@ public class ViewGroupActivity extends AppCompatActivity implements View.OnTouch
         btn1= (CircleButton)findViewById(R.id.btn1);
         btn2= (CircleButton)findViewById(R.id.btn2);
         btn3= (CircleButton)findViewById(R.id.btn3);
-        btn1.setAttachView(slidingViewGroup);
-        btn2.setAttachView(slidingViewGroup);
-        btn3.setAttachView(slidingViewGroup);
+        slidingViewGroup.setIndicator(customViewGroup);
         btn1.setOnTouchListener(this);
         btn2.setOnTouchListener(this);
         btn3.setOnTouchListener(this);

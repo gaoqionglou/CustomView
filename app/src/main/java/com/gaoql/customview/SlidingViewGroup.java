@@ -30,6 +30,7 @@ public class SlidingViewGroup extends ViewGroup implements GestureDetector.OnGes
     private float dx;
     private boolean isOnFling = false;
     private boolean isFirst = true;
+    private CustomViewGroup indicator;
     public SlidingViewGroup(Context context) {
         this(context,null);
     }
@@ -64,6 +65,26 @@ public class SlidingViewGroup extends ViewGroup implements GestureDetector.OnGes
 
     public void setCurrentPageIndex(int currentPageIndex) {
         this.currentPageIndex = currentPageIndex;
+    }
+
+    /**
+     * 获取指示器
+     * @return
+     */
+    public CustomViewGroup getIndicator() {
+        return indicator;
+    }
+
+    /**
+     * 为ViewPager指定一个指示器
+     * @param indicator
+     */
+    public void setIndicator(CustomViewGroup indicator) {
+        this.indicator = indicator;
+        for(int i=0;i<indicator.getChildCount();i++){
+            CircleButton childView = (CircleButton)indicator.getChildAt(i);
+            childView.setAttachView(this);
+        }
     }
 
     /** 1 测试和布局*/
@@ -172,7 +193,7 @@ public class SlidingViewGroup extends ViewGroup implements GestureDetector.OnGes
 
     @Override
     public boolean onInterceptTouchEvent(MotionEvent ev) {
-        //暂时不分发事件，自己处理
+        //TODO :暂时不分发事件，自己处理 -.-
         return !super.onInterceptTouchEvent(ev);
     }
 
@@ -191,6 +212,7 @@ public class SlidingViewGroup extends ViewGroup implements GestureDetector.OnGes
                 lastX = x;
                 break;
             case MotionEvent.ACTION_UP:
+//                indicator.addChildViewCenterPointToQueue(currentPageIndex);
                 Log.e(TAG,"onTouchEvent ACTION_UP getScrollX - "+getScrollX());
                 View childView = getChildAt(0);
                 int width = childView.getRight()-childView.getLeft();
@@ -216,6 +238,8 @@ public class SlidingViewGroup extends ViewGroup implements GestureDetector.OnGes
                         int dx = width - delta;
                         mScroller.startScroll(scrollX, 0, dx, 0, 1000);
                         invalidate();
+                        indicator.addChildViewCenterPointToQueue(currentPageIndex);
+                        indicator.startCircleMoving();
                         break;
                     }
 
@@ -239,6 +263,8 @@ public class SlidingViewGroup extends ViewGroup implements GestureDetector.OnGes
                         }
                     }
 //                    mScroller.startScroll(scrollX, 0, -delta, 0,1000);
+                    indicator.addChildViewCenterPointToQueue(currentPageIndex);
+                    indicator.startCircleMoving();
                 }
                 break;
             case MotionEvent.ACTION_MOVE:
@@ -363,6 +389,11 @@ public class SlidingViewGroup extends ViewGroup implements GestureDetector.OnGes
         }
         if(Math.abs(distanceX)>=minScrollDistance) {
             Log.e(TAG,"before--"+currentPageIndex);
+            if(distanceX == 0){
+                Log.e(TAG,"onFling donothing distanceX =0");
+                return true;
+            }
+            indicator.addChildViewCenterPointToQueue(currentPageIndex);
             if (distanceX < 0) {
                 if (currentPageIndex < getChildCount() - 1) {
                     isFirst=false;
@@ -379,6 +410,8 @@ public class SlidingViewGroup extends ViewGroup implements GestureDetector.OnGes
                     currentPageIndex--;
                 }
             }
+            indicator.addChildViewCenterPointToQueue(currentPageIndex);
+            indicator.startCircleMoving();
             Log.e(TAG,"after--"+currentPageIndex);
         }
 
@@ -445,13 +478,17 @@ public class SlidingViewGroup extends ViewGroup implements GestureDetector.OnGes
         invalidate();
     }
 
+    /**
+     * 从当前页面移动到指定的页面
+     * @param currentPageIndex
+     * @param targetPageIndex
+     */
     public void moveTo(int currentPageIndex,int targetPageIndex){
         View childView = getChildAt(0);
         int width = childView.getRight()-childView.getLeft();
         int scrollX =  getScrollX();
         int diff = targetPageIndex - currentPageIndex;
         this.currentPageIndex = targetPageIndex;
-         direction =  Math.signum(diff);
         mScroller.startScroll(scrollX, 0,diff *width, 0, 1000);
         invalidate();
     }

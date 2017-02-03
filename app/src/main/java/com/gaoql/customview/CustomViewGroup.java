@@ -579,6 +579,7 @@ public class CustomViewGroup extends ViewGroup {
             dataPoint =  initDataPoint(0,0,p.x,p.y,0);
             initCtrlPoint(dataPoint);
             drawCubicBezier(canvas);
+            /** 此时队列中只有一个点，则描绘边界*/
             ripple(p,canvas);
         }else if(pointLimitQueue.size()==2){
             /** 队列有2个点则重置点的数据，并执行动画重绘界面*/
@@ -607,7 +608,13 @@ public class CustomViewGroup extends ViewGroup {
         }
     }
 
+    /**
+     * 画笔设置为描边，指定描边的宽度和透明度(随时间而变化)
+     * @param p
+     * @param canvas
+     */
     private void ripple(PointF p,Canvas canvas){
+//        画笔设置为描边，指定描边的宽度和透明度(随时间而变化)
         ripplePaint.setStyle(Paint.Style.STROKE);
         ripplePaint.setColor(Color.WHITE);
         ripplePaint.setStrokeWidth(rippleWidth*rippleInterpolatedTime);
@@ -673,7 +680,8 @@ public class CustomViewGroup extends ViewGroup {
                 Log.i(TAG,"p-"+ex+","+ey);
                 View v = isInChildView(ex,ey);
                 if(v!=null){
-                    handler.sendEmptyMessage(3);
+                    /** 当触摸点DOWN在子View内，触发一个描边波浪效果 */
+                    startRipple();
                     int top = v.getTop();
                     int bottom = v.getBottom();
                     int left = v.getLeft();
@@ -686,7 +694,7 @@ public class CustomViewGroup extends ViewGroup {
                 if(pointLimitQueue.size()==1){
                     invalidate();
                 }else
-                handler.sendEmptyMessage(0);
+                startCircleMoving();
                 Log.e(TAG,"onInterceptTouchEvent ACTION_DOWN");
                 break;
             case MotionEvent.ACTION_MOVE:
@@ -697,6 +705,20 @@ public class CustomViewGroup extends ViewGroup {
                 break;
         }
         return super.onInterceptTouchEvent(ev);
+    }
+
+    /**
+     * 开始描边波浪动画
+     */
+    public void startRipple(){
+        handler.sendEmptyMessage(3);
+    }
+
+    /**
+     * 开始弹性圆形移动动画
+     */
+    public void startCircleMoving(){
+        handler.sendEmptyMessage(0);
     }
 
     /**
@@ -722,6 +744,39 @@ public class CustomViewGroup extends ViewGroup {
             }
         }
         return v;
+    }
+
+    /**
+     * 获取子View的中心点坐标,并加入点队列
+     * @return
+     */
+    public PointF addChildViewCenterPointToQueue(View childView){
+        int top = childView.getTop();
+        int bottom = childView.getBottom();
+        int left = childView.getLeft();
+        int right = childView.getRight();
+        PointF p = new PointF();
+        p.x = left+(right - left)/2f;
+        p.y = top+(bottom - top)/2f;
+        pointLimitQueue.offer(p);
+        return p;
+    }
+
+    /**
+     * 获取子View的中心点坐标,并加入点队列
+     * @return
+     */
+    public PointF addChildViewCenterPointToQueue(int index){
+        View childView= getChildAt(index);
+        int top = childView.getTop();
+        int bottom = childView.getBottom();
+        int left = childView.getLeft();
+        int right = childView.getRight();
+        PointF p = new PointF();
+        p.x = left+(right - left)/2f;
+        p.y = top+(bottom - top)/2f;
+        pointLimitQueue.offer(p);
+        return p;
     }
 
     @Override
@@ -880,8 +935,8 @@ public class CustomViewGroup extends ViewGroup {
         public void onAnimationEnd(Animation animation) {
             super.onAnimationEnd(animation);
 //            state = STATE_STOP;
-            handler.sendEmptyMessage(1);//结束
-            handler.sendEmptyMessage(3);
+            handler.sendEmptyMessage(1);//结束定时器
+            handler.sendEmptyMessage(3);//开启描边波浪效果
         }
 
         @Override
