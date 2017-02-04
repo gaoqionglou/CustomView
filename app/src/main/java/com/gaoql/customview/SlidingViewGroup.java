@@ -18,17 +18,13 @@ public class SlidingViewGroup extends ViewGroup implements GestureDetector.OnGes
     private GestureDetector gestureDetector ;
     private Scroller mScroller;
     private VelocityTracker velocityTracker;//速率跟踪器
-    private ViewConfiguration configuration;
-    private int i =1;
+    private ViewConfiguration configuration;//获取系统配置的最小滑动距离和速率
     private float lastX=0;
     private int offsetX,offsetY;
     private int currentPageIndex=0;
     private int minScrollDistance = 0;
     private int minFlingVelocity = 0;
-    private int minScrollVer = 0;
-    private float direction = 1f;
     private float dx;
-    private boolean isOnFling = false;
     private boolean isFirst = true;
     private CustomViewGroup indicator;
     public SlidingViewGroup(Context context) {
@@ -48,7 +44,7 @@ public class SlidingViewGroup extends ViewGroup implements GestureDetector.OnGes
         setClickable(true);
         init(context);
     }
-    /** 初始化手势监听器*/
+    /** 初始化手势监听器等等*/
     private void init(Context context){
         gestureDetector = new GestureDetector(context,this);
         gestureDetector.setIsLongpressEnabled(false);
@@ -193,7 +189,7 @@ public class SlidingViewGroup extends ViewGroup implements GestureDetector.OnGes
 
     @Override
     public boolean onInterceptTouchEvent(MotionEvent ev) {
-        //TODO :暂时不分发事件，自己处理 -.-
+        //TODO :暂时不分发事件，自己处理 -.-，进入onTouchEvent中
         return !super.onInterceptTouchEvent(ev);
     }
 
@@ -201,11 +197,12 @@ public class SlidingViewGroup extends ViewGroup implements GestureDetector.OnGes
     public boolean onTouchEvent(MotionEvent event) {
         obtainVelocityTracker(event);
         int action = event.getAction();
-        float x = event.getRawX();
+        float x = event.getRawX();//拿相对于屏幕的x坐标
         float ex = event.getX();
         float ey = event.getY();
         switch (action){
             case MotionEvent.ACTION_DOWN:
+/**                手指按下，获取偏移量 更新x坐标*/
 //                Log.e(TAG,"onTouchEvent ACTION_DOWN");
 //                Log.e(TAG,"onTouchEvent ACTION_DOWN getScrollX - "+getScrollX());
                 offsetX=getScrollX();
@@ -267,6 +264,7 @@ public class SlidingViewGroup extends ViewGroup implements GestureDetector.OnGes
                 }
                 break;
             case MotionEvent.ACTION_MOVE:
+                /** 拖动的时候*/
                 dx = x-lastX;
 //                Log.e(TAG,"onTouchEvent ACTION_MOVE dx - "+dx+",x - "+x+",lastX - "+lastX+",currentPageIndex--"+currentPageIndex);
                 lastX = x;
@@ -274,7 +272,7 @@ public class SlidingViewGroup extends ViewGroup implements GestureDetector.OnGes
                 if(currentPageIndex==0&&dx>0 || currentPageIndex==getChildCount()-1&&dx<0){
                     break;
                 }
-                scrollBy((int)-dx,0);/** */
+                scrollBy((int)-dx,0);/** 在当前位置的基础上，偏移到(-dx,0)的位置，那么看起来有被拖拽的效果...*/
                 break;
             case MotionEvent.ACTION_CANCEL://TODO:事件被上层拦截时触发。那么用来注销VelocityTracker？
                 realseVelocityTracker();
@@ -347,26 +345,17 @@ public class SlidingViewGroup extends ViewGroup implements GestureDetector.OnGes
 
     @Override
     public void onShowPress(MotionEvent e) {
-        Log.e(TAG,"onShowPress");
+//        Log.e(TAG,"onShowPress");
     }
 
     @Override
     public boolean onSingleTapUp(MotionEvent e) {
-        Log.e(TAG,"onSingleTapUp");
+//        Log.e(TAG,"onSingleTapUp");
         return false;
     }
-
+    /** 注意：要在onDown()返回true才可以触发onScroll，滑动的时候会多次调用，于是在onFling中搞事情*/
     @Override
     public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY) {
-//       Log.e(TAG,"e1-"+e1.getX()+","+e1.getY());
-//        Log.e(TAG,"e2-"+e2.getX()+","+e2.getY());
-//        Log.e(TAG,"distanceX-"+distanceX+",distanceY"+distanceY);
-/*        int a =  getChildAt(0).getWidth();
-        if(distanceX>0) {
-            smoothScrollBy(200, 0);
-        }else if(distanceX<0){
-            smoothScrollBy(-200, 0);
-        }*/
         return false;
     }
 
