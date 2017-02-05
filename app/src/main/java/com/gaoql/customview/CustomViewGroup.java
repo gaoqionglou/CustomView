@@ -311,7 +311,8 @@ public class CustomViewGroup extends ViewGroup {
          * */
         float s1 = 0.3f;
         float s2 = 0.6f;
-        float s3 = 0.9f;
+        float s3 = 0.8f;
+        float s4 = 0.9f;
 
         if (mInterpolatedTime <= 0) {
             dataPoint[0].x = centerX - radius;
@@ -528,16 +529,69 @@ public class CustomViewGroup extends ViewGroup {
             List<PointF> ds = Arrays.asList(dataPoint);
 //            Log.i(TAG,"4-dataPoint "+ds.toString()  );
         } else {
-            dataPoint[0].x = centerX - radius;
-            dataPoint[0].y = centerY;
+            if(isRight) {
+                if(mInterpolatedTime>s3&&mInterpolatedTime<=s4) {
+                    float d =  radius;
+                    float k = d*0.25f/(s3-s4);
+                    float b = d*0.25f-k*s3;
+                    Log.i(TAG,"--"+(k*mInterpolatedTime+b));
+                    dataPoint[0].x = centerX-(d*3f/4f + k*mInterpolatedTime+b);
+                    dataPoint[0].y = centerY;
 
-            dataPoint[1].x = centerX;
-            dataPoint[1].y = centerY - radius;
-            dataPoint[2].x = centerX + radius;
-            dataPoint[2].y = centerY;
+                    dataPoint[1].x = centerX;
+                    dataPoint[1].y = centerY - radius;
+                    dataPoint[2].x = centerX + radius;
+                    dataPoint[2].y = centerY;
 
-            dataPoint[3].x = centerX;
-            dataPoint[3].y = centerY + radius;
+                    dataPoint[3].x = centerX;
+                    dataPoint[3].y = centerY + radius;
+                }else if(mInterpolatedTime>s4&&mInterpolatedTime<=1){
+                    float d = radius;
+                    float k = -d*0.25f/(s4-1);
+                    float b = -k*s4;
+                    Log.i(TAG,"--"+(k*mInterpolatedTime+b));
+                    dataPoint[0].x = centerX-(d*3f/4f + k*mInterpolatedTime+b);
+                    dataPoint[0].y = centerY;
+
+                    dataPoint[1].x = centerX;
+                    dataPoint[1].y = centerY - radius;
+                    dataPoint[2].x = centerX + radius;
+                    dataPoint[2].y = centerY;
+
+                    dataPoint[3].x = centerX;
+                    dataPoint[3].y = centerY + radius;
+                }
+            }else {
+                if(mInterpolatedTime>s3&&mInterpolatedTime<=s4) {
+                    float d =  radius;
+                    float k = d*0.25f/(s3-s4);
+                    float b = d*0.25f-k*s3;
+                    dataPoint[0].x = centerX - radius;
+                    dataPoint[0].y = centerY;
+
+                    dataPoint[1].x = centerX;
+                    dataPoint[1].y = centerY - radius;
+                    dataPoint[2].x = centerX+d*3f/4f +k*mInterpolatedTime+b ;
+                    dataPoint[2].y = centerY;
+
+                    dataPoint[3].x = centerX;
+                    dataPoint[3].y = centerY + radius;
+                }else if(mInterpolatedTime>s4&&mInterpolatedTime<=1){
+                    float d = radius;
+                    float k = -d*0.25f/(s4-1);
+                    float b = -k*s4;
+                    dataPoint[0].x = centerX - radius;
+                    dataPoint[0].y = centerY;
+
+                    dataPoint[1].x = centerX;
+                    dataPoint[1].y = centerY - radius;
+                    dataPoint[2].x = centerX+d*3f/4f +k*mInterpolatedTime+b;
+                    dataPoint[2].y = centerY;
+
+                    dataPoint[3].x = centerX;
+                    dataPoint[3].y = centerY + radius;
+                }
+            }
             List<PointF> ps = Arrays.asList(firstDataPoint);
 //            Log.i(TAG,"5-firstDataPoint "+ps.toString()  );
             List<PointF> ds = Arrays.asList(dataPoint);
