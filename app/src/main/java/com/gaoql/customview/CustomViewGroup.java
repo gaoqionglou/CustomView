@@ -340,6 +340,7 @@ public class CustomViewGroup extends ViewGroup {
             List<PointF> ds = Arrays.asList(dataPoint);
 //            Log.i(TAG,"1-dataPoint "+ds.toString()  );
         } else if (mInterpolatedTime > 0 && mInterpolatedTime <= s1) {
+            /** 0 - s1 阶段 水平的2个dataPoint，向平移的方向拉伸bendingDistanced的距离，用时为[0,s1]*/
             if (isRight) {
                 dataPoint[0].x = firstDataPoint[0].x;
                 dataPoint[0].y = firstDataPoint[0].y;
@@ -367,15 +368,20 @@ public class CustomViewGroup extends ViewGroup {
 
 
             if (isRight) {
-                float finalX_3 = firstCenterX + kx * s2;
-                float kMiddle_3 = (finalX_3 - firstDataPoint[1].x) / (s2 - s1);
-                float bMiddle_3 = firstDataPoint[1].x - (finalX_3 - firstDataPoint[1].x) * s1 / (s2 - s1);
-                float d2_3 = firstDataPoint[2].x + bendingDistance;
-                float d0_3 = firstDataPoint[0].x + bendingDistance;
-                float k0_3 = (finalX_3 - radius - d0_3) / (s2 - s1);
-                float b0_3 = firstDataPoint[0].x - (finalX_3 - radius - d0_3) * s1 / (s2 - s1);
-                float k2_3 = (finalX_3 + radius - d2_3) / (s2 - s1);
-                float b2_3 = d2_3 - s1 * (finalX_3 + radius - d2_3) / (s2 - s1);
+                /** 向右为例， finalCenterX 是终点s2的中心点坐标，注意:中心点的x行走是规律的是(从头到尾都是 y=kx+b )
+                 *  1. 计算垂直方向上的2个点的一次函数表达式，起点是[0,s1]阶段的结束点就是firstDataPoint[1].x，终点就是finalCenterX了..草稿纸计算得如下
+                 *  2. 计算水平方向上的2个点的一次函数表达式，d0是左的点，起点是d0_s1,结束点是finalCenterX-radius-bendingDistance,为什么减掉bendingDistance，因为要营造左点回来较慢被拉伸的效果
+                 *     d2是右点，起点是d2_s1,结束点是 finalCenterX+radius 用时s2-s1..草稿纸计算得如下
+                 * */
+                float finalCenterX = firstCenterX + kx * s2;
+                float kMiddle_s2 = (finalCenterX - firstDataPoint[1].x) / (s2 - s1);
+                float bMiddle_s2 = firstDataPoint[1].x - (finalCenterX - firstDataPoint[1].x) * s1 / (s2 - s1);
+                float d2_s1 = firstDataPoint[2].x + bendingDistance;
+                float d0_s1 = firstDataPoint[0].x;
+                float k0_s2 = (finalCenterX - radius -bendingDistance - d0_s1) / (s2 - s1);
+                float b0_s2 = firstDataPoint[0].x - (finalCenterX - radius -bendingDistance- d0_s1) * s1 / (s2 - s1);
+                float k2_s2 = (finalCenterX + radius - d2_s1) / (s2 - s1);
+                float b2_s2 = d2_s1 - s1 * (finalCenterX + radius - d2_s1) / (s2 - s1);
 
 //                float finalY_3 = firstCenterY+ky*s2;
 //                float kMiddleY_3= (finalY_3-firstDataPoint[0].y)/(s2-s1);
@@ -385,24 +391,24 @@ public class CustomViewGroup extends ViewGroup {
 //                float k3_Y_3=(finalY_3+radius - firstDataPoint[2].y)/(s2-s1);
 //                float b3_Y_3= firstDataPoint[2].y-(finalY_3+radius - firstDataPoint[2].y)*s1/(s2-s1);
 
-                dataPoint[0].x = k0_3 * mInterpolatedTime + b0_3;
+                dataPoint[0].x = k0_s2 * mInterpolatedTime + b0_s2;
                 dataPoint[0].y = centerY;
-                dataPoint[1].x = kMiddle_3 * mInterpolatedTime + bMiddle_3;
+                dataPoint[1].x = kMiddle_s2 * mInterpolatedTime + bMiddle_s2;
                 dataPoint[1].y = centerY - radius;
-                dataPoint[2].x = k2_3 * mInterpolatedTime + b2_3;
+                dataPoint[2].x = k2_s2 * mInterpolatedTime + b2_s2;
                 dataPoint[2].y = centerY;
-                dataPoint[3].x = kMiddle_3 * mInterpolatedTime + bMiddle_3;
+                dataPoint[3].x = kMiddle_s2 * mInterpolatedTime + bMiddle_s2;
                 dataPoint[3].y = centerY + radius;
             } else {
-                float finalX_3 = firstCenterX + kx * s2;
-                float kMiddle_3 = (finalX_3 - firstDataPoint[1].x) / (s2 - s1);
-                float bMiddle_3 = firstDataPoint[1].x - (finalX_3 - firstDataPoint[1].x) * s1 / (s2 - s1);
-                float d0_3 = firstDataPoint[0].x + bendingDistance;
-                float d2_3 = firstDataPoint[2].x + bendingDistance;
-                float k0_3 = (finalX_3 - radius - d0_3) / (s2 - s1);
-                float b0_3 = d0_3 - (finalX_3 - radius - d0_3) * s1 / (s2 - s1);
-                float k2_3 = (finalX_3 + radius - d2_3) / (s2 - s1);
-                float b2_3 = firstDataPoint[2].x - s1 * (finalX_3 + radius - d2_3) / (s2 - s1);
+                float finalCenterX = firstCenterX + kx * s2;
+                float kMiddle = (finalCenterX - firstDataPoint[1].x) / (s2 - s1);
+                float bMiddle = firstDataPoint[1].x - (finalCenterX - firstDataPoint[1].x) * s1 / (s2 - s1);
+                float d0_s1 = firstDataPoint[0].x + bendingDistance;
+                float d2_s1 = firstDataPoint[2].x /*+ bendingDistance*/;
+                float k0_s2 = (finalCenterX - radius - d0_s1) / (s2 - s1);
+                float b0_s2 = d0_s1 - (finalCenterX - radius - d0_s1) * s1 / (s2 - s1);
+                float k2_s2 = (finalCenterX + radius- bendingDistance- d2_s1) / (s2 - s1);
+                float b2_s2 = firstDataPoint[2].x - s1 * (finalCenterX + radius- bendingDistance - d2_s1) / (s2 - s1);
 
 //                float finalY_3 = firstCenterY+ky*s2;
 //                float kMiddleY_3= (finalY_3-firstDataPoint[0].y)/(s2-s1);
@@ -412,13 +418,13 @@ public class CustomViewGroup extends ViewGroup {
 //                float k3_Y_3=(finalY_3+radius - firstDataPoint[2].y)/(s2-s1);
 //                float b3_Y_3= firstDataPoint[2].y-(finalY_3+radius - firstDataPoint[2].y)*s1/(s2-s1);
 
-                dataPoint[0].x = k0_3 * mInterpolatedTime + b0_3;
+                dataPoint[0].x = k0_s2 * mInterpolatedTime + b0_s2;
                 dataPoint[0].y = centerY;
-                dataPoint[1].x = kMiddle_3 * mInterpolatedTime + bMiddle_3;
+                dataPoint[1].x = kMiddle * mInterpolatedTime + bMiddle;
                 dataPoint[1].y = centerY - radius;
-                dataPoint[2].x = k2_3 * mInterpolatedTime + b2_3;
+                dataPoint[2].x = k2_s2 * mInterpolatedTime + b2_s2;
                 dataPoint[2].y = centerY;
-                dataPoint[3].x = kMiddle_3 * mInterpolatedTime + bMiddle_3;
+                dataPoint[3].x = kMiddle * mInterpolatedTime + bMiddle;
                 dataPoint[3].y = centerY + radius;
             }
             List<PointF> ps = Arrays.asList(firstDataPoint);
@@ -428,24 +434,26 @@ public class CustomViewGroup extends ViewGroup {
         } else if (mInterpolatedTime > s2 && mInterpolatedTime <= s3) {
 
             if (isRight) {
+                /** 向右为例，便于理解，这里把上面的代码copy了一份，要通过上面[s1，s2]来计算s2时间的结束点位置
+                 *
+                 * */
+                float finalCenterX_s2 = firstCenterX + kx * s2;
+                float kMiddle_s2 = (finalCenterX_s2 - firstDataPoint[1].x) / (s2 - s1);
+                float bMiddle_s2 = firstDataPoint[1].x - (finalCenterX_s2 - firstDataPoint[1].x) * s1 / (s2 - s1);
+                float d2_s2 = firstDataPoint[2].x + bendingDistance;
+                float d0_s2 = firstDataPoint[0].x + bendingDistance;
+                float k0_s2 = (finalCenterX_s2 - radius - d0_s2) / (s2 - s1);
+                float b0_s2 = firstDataPoint[0].x - (finalCenterX_s2 - radius - d0_s2) * s1 / (s2 - s1);
+                float k2_s2 = (finalCenterX_s2 + radius - d2_s2) / (s2 - s1);
+                float b2_s2 = d2_s2 - s1 * (finalCenterX_s2 + radius - d2_s2) / (s2 - s1);
 
-                float finalX_3 = firstCenterX + kx * s2;
-                float kMiddle_3 = (finalX_3 - firstDataPoint[1].x) / (s2 - s1);
-                float bMiddle_3 = firstDataPoint[1].x - (finalX_3 - firstDataPoint[1].x) * s1 / (s2 - s1);
-                float d2_3 = firstDataPoint[2].x + bendingDistance;
-                float d0_3 = firstDataPoint[0].x + bendingDistance;
-                float k0_3 = (finalX_3 - radius - d0_3) / (s2 - s1);
-                float b0_3 = firstDataPoint[0].x - (finalX_3 - radius - d0_3) * s1 / (s2 - s1);
-                float k2_3 = (finalX_3 + radius - d2_3) / (s2 - s1);
-                float b2_3 = d2_3 - s1 * (finalX_3 + radius - d2_3) / (s2 - s1);
-
-                float finalX_4 = firstCenterX + kx * s3;
-                float kMiddle_4 = (finalX_4 - kMiddle_3 * s2 - bMiddle_3) / (s3 - s2);
-                float bMiddle_4 = kMiddle_3 * s2 + bMiddle_3 - (finalX_4 - kMiddle_3 * s2 - bMiddle_3) * s2 / (s3 - s2);
-                float k0_4 = (finalX_4 - radius - k0_3 * s2 - b0_3) / (s3 - s2);
-                float b0_4 = k0_3 * s2 + b0_3 - (finalX_4 - radius - k0_3 * s2 - b0_3) * s2 / (s3 - s2);
-                float k2_4 = (finalX_4 + radius - k2_3 * s2 - b2_3) / (s3 - s2);
-                float b2_4 = k2_3 * s2 + b2_3 - s2 * (finalX_4 + radius - k2_3 * s2 - b2_3) / (s3 - s2);
+                float finalCenterX_s3 = firstCenterX + kx * s3;
+                float kMiddle_s3 = (finalCenterX_s3 - (kMiddle_s2 * s2 + bMiddle_s2)) / (s3 - s2);
+                float bMiddle_s3 = (kMiddle_s2 * s2 + bMiddle_s2) - (finalCenterX_s3 - (kMiddle_s2 * s2 + bMiddle_s2)) * s2 / (s3 - s2);
+                float k0_s3 = (finalCenterX_s3 - radius - (k0_s2 * s2 + b0_s2)) / (s3 - s2);
+                float b0_s3 = (k0_s2 * s2 + b0_s2) - (finalCenterX_s3 - radius - (k0_s2 * s2 + b0_s2)) * s2 / (s3 - s2);
+                float k2_s3 = (finalCenterX_s3 + radius - (k2_s2 * s2 + b2_s2)) / (s3 - s2);
+                float b2_s3 = k2_s2 * s2 + b2_s2 - s2 * (finalCenterX_s3 + radius - (k2_s2 * s2 + b2_s2)) / (s3 - s2);
 
 //                float finalY_3 = firstCenterY+ky*s2;
 //                float kMiddleY_3= (finalY_3-firstDataPoint[0].y)/(s2-s1);
@@ -463,32 +471,32 @@ public class CustomViewGroup extends ViewGroup {
 //                float k3_Y_4=(finalY_4+radius - k3_Y_3*mInterpolatedTime-b3_Y_3)/(s2-s1);
 //                float b3_Y_4= k3_Y_3*mInterpolatedTime+b3_Y_3 - (finalY_4+radius - k3_Y_3*mInterpolatedTime-b3_Y_3)*s1/(s2-s1);
 
-                dataPoint[0].x = k0_4 * mInterpolatedTime + b0_4;
+                dataPoint[0].x = k0_s3 * mInterpolatedTime + b0_s3;
                 dataPoint[0].y = centerY;
-                dataPoint[1].x = kMiddle_4 * mInterpolatedTime + bMiddle_4;
+                dataPoint[1].x = kMiddle_s3 * mInterpolatedTime + bMiddle_s3;
                 dataPoint[1].y = centerY - radius;
-                dataPoint[2].x = k2_4 * mInterpolatedTime + b2_4;
+                dataPoint[2].x = k2_s3 * mInterpolatedTime + b2_s3;
                 dataPoint[2].y = centerY;
-                dataPoint[3].x = kMiddle_4 * mInterpolatedTime + bMiddle_4;
+                dataPoint[3].x = kMiddle_s3 * mInterpolatedTime + bMiddle_s3;
                 dataPoint[3].y = centerY + radius;
             } else {
-                float finalX_3 = firstCenterX + kx * s2;
-                float kMiddle_3 = (finalX_3 - firstDataPoint[1].x) / (s2 - s1);
-                float bMiddle_3 = firstDataPoint[1].x - (finalX_3 - firstDataPoint[1].x) * s1 / (s2 - s1);
-                float d0_3 = firstDataPoint[0].x + bendingDistance;
-                float d2_3 = firstDataPoint[2].x + bendingDistance;
-                float k0_3 = (finalX_3 - radius - d0_3) / (s2 - s1);
-                float b0_3 = d0_3 - (finalX_3 - radius - d0_3) * s1 / (s2 - s1);
-                float k2_3 = (finalX_3 + radius - d2_3) / (s2 - s1);
-                float b2_3 = firstDataPoint[2].x - s1 * (finalX_3 + radius - d2_3) / (s2 - s1);
+                float finalCenterX_s3 = firstCenterX + kx * s2;
+                float kMiddle_s3 = (finalCenterX_s3 - firstDataPoint[1].x) / (s2 - s1);
+                float bMiddle_s3 = firstDataPoint[1].x - (finalCenterX_s3 - firstDataPoint[1].x) * s1 / (s2 - s1);
+                float d0_s3 = firstDataPoint[0].x + bendingDistance;
+                float d2_s3 = firstDataPoint[2].x + bendingDistance;
+                float k0_s3 = (finalCenterX_s3 - radius - d0_s3) / (s2 - s1);
+                float b0_s3 = d0_s3 - (finalCenterX_s3 - radius - d0_s3) * s1 / (s2 - s1);
+                float k2_s3 = (finalCenterX_s3 + radius - d2_s3) / (s2 - s1);
+                float b2_s3 = firstDataPoint[2].x - s1 * (finalCenterX_s3 + radius - d2_s3) / (s2 - s1);
 
-                float finalX_4 = firstCenterX + kx * s3;
-                float kMiddle_4 = (finalX_4 - kMiddle_3 * s2 - bMiddle_3) / (s3 - s2);
-                float bMiddle_4 = kMiddle_3 * s2 + bMiddle_3 - (finalX_4 - kMiddle_3 * s2 - bMiddle_3) * s2 / (s3 - s2);
-                float k0_4 = (finalX_4 - radius - k0_3 * s2 - b0_3) / (s3 - s2);
-                float b0_4 = k0_3 * s2 + b0_3 - (finalX_4 - radius - k0_3 * s2 - b0_3) * s2 / (s3 - s2);
-                float k2_4 = (finalX_4 + radius - k2_3 * s2 - b2_3) / (s3 - s2);
-                float b2_4 = k2_3 * s2 + b2_3 - s2 * (finalX_4 + radius - k2_3 * s2 - b2_3) / (s3 - s2);
+                float finalCenterX_s4 = firstCenterX + kx * s3;
+                float kMiddle_s4 = (finalCenterX_s4 - (kMiddle_s3 * s2 + bMiddle_s3)) / (s3 - s2);
+                float bMiddle_s4 = kMiddle_s3 * s2 + bMiddle_s3 - (finalCenterX_s4 - (kMiddle_s3 * s2 + bMiddle_s3)) * s2 / (s3 - s2);
+                float k0_s4 = (finalCenterX_s4 - radius - (k0_s3 * s2 + b0_s3)) / (s3 - s2);
+                float b0_s4 = (k0_s3 * s2 + b0_s3) - (finalCenterX_s4 - radius - (k0_s3 * s2 + b0_s3)) * s2 / (s3 - s2);
+                float k2_s4 = (finalCenterX_s4 + radius - (k2_s3 * s2 + b2_s3)) / (s3 - s2);
+                float b2_s4 = (k2_s3 * s2 + b2_s3) - s2 * (finalCenterX_s4 + radius - (k2_s3 * s2 + b2_s3)) / (s3 - s2);
 
 //                float finalY_3 = firstCenterY+ky*s2;
 //                float kMiddleY_3= (finalY_3-firstDataPoint[0].y)/(s2-s1);
@@ -506,13 +514,13 @@ public class CustomViewGroup extends ViewGroup {
 //                float k3_Y_4=(finalY_4+radius - k3_Y_3*mInterpolatedTime-b3_Y_3)/(s2-s1);
 //                float b3_Y_4= k3_Y_3*mInterpolatedTime+b3_Y_3 - (finalY_4+radius - k3_Y_3*mInterpolatedTime-b3_Y_3)*s1/(s2-s1);
 
-                dataPoint[0].x = k0_4 * mInterpolatedTime + b0_4;
+                dataPoint[0].x = k0_s4 * mInterpolatedTime + b0_s4;
                 dataPoint[0].y = centerY;
-                dataPoint[1].x = kMiddle_4 * mInterpolatedTime + bMiddle_4;
+                dataPoint[1].x = kMiddle_s4 * mInterpolatedTime + bMiddle_s4;
                 dataPoint[1].y = centerY - radius;
-                dataPoint[2].x = k2_4 * mInterpolatedTime + b2_4;
+                dataPoint[2].x = k2_s4 * mInterpolatedTime + b2_s4;
                 dataPoint[2].y = centerY;
-                dataPoint[3].x = kMiddle_4 * mInterpolatedTime + bMiddle_4;
+                dataPoint[3].x = kMiddle_s4 * mInterpolatedTime + bMiddle_s4;
                 dataPoint[3].y = centerY + radius;
             }
             List<PointF> ps = Arrays.asList(firstDataPoint);
