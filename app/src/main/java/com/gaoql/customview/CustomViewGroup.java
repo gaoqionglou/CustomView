@@ -61,7 +61,7 @@ public class CustomViewGroup extends ViewGroup {
     /**
      * 简单的平移动画类
      */
-    private TranslteAnimaton move = new TranslteAnimaton();
+    private TranslateAnimation move = new TranslateAnimation();
     private RippleScaleAnimation rippleScaleAnimation = new RippleScaleAnimation();
     private float rippleWidth = 20f;
     /**
@@ -83,13 +83,14 @@ public class CustomViewGroup extends ViewGroup {
     /**
      * 动画状态
      */
-    private int state = STATE_UNSTART;
+    private int translateState = STATE_UNSTART;
     private int rippleState = STATE_UNSTART;
     /**
      * 动画播放时间 范围在[0,1]
      */
     private float mInterpolatedTime = 0f;//0-1的播放时间
     private float rippleInterpolatedTime = 0f;//0-1的播放时间
+    private SlidingViewGroup attachView;
     /**
      * 圆的平移过程x,y的斜率
      */
@@ -113,8 +114,8 @@ public class CustomViewGroup extends ViewGroup {
                 case 0:
                     // 移除所有的msg.what为0等消息，保证只有一个循环消息队列再跑
                     handler.removeMessages(0);
-                    if (state != STATE_START && pointLimitQueue.size() > 1) {
-                        startTranslteAnimaton();
+                    if (translateState != STATE_START && pointLimitQueue.size() > 1) {
+                        startTranslateAnimation();
                     }
                     // 再次发出msg，循环更新
                     handler.sendEmptyMessageDelayed(0, 1000);
@@ -141,12 +142,36 @@ public class CustomViewGroup extends ViewGroup {
     }
 
     public CustomViewGroup(Context context, AttributeSet attrs) {
-        super(context, attrs);
-        initData();
+        this(context, attrs,0);
     }
 
     public CustomViewGroup(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
+        initData();
+    }
+
+    public int getTranslateState() {
+        return translateState;
+    }
+
+    public int getRippleState() {
+        return rippleState;
+    }
+
+    public SlidingViewGroup getAttachView() {
+        return attachView;
+    }
+
+    public void setAttachView(SlidingViewGroup attachView) {
+        this.attachView = attachView;
+    }
+
+    /**
+     * 动画是否进行中
+     * @return
+     */
+    public boolean isTranslateOrRippleInProgress(){
+        return getTranslateState() == STATE_MOVING || getRippleState() == STATE_MOVING;
     }
 
 
@@ -253,8 +278,6 @@ public class CustomViewGroup extends ViewGroup {
             int childHeight = childView.getMeasuredHeight();
             MarginLayoutParams clp = (MarginLayoutParams) childView.getLayoutParams();
             w += childWith + clp.leftMargin + clp.rightMargin;
-//            Log.e(TAG,"CHILD onLayout: "+(i+1)+",l-"+(l+w-childWith)+",t-"+t+",r-"+w+",b-"+b);
-//            Log.e(TAG,"CHILD onLayout: "+(i+1)+"top-"+childView.getTop()+",bottom-"+childView.getBottom()+",left-"+childView.getLeft()+",right-"+childView.getRight());
             childView.layout(w - childWith, t, w, childHeight);
         }
 
@@ -264,14 +287,11 @@ public class CustomViewGroup extends ViewGroup {
      * 初始化
      */
     private void initData() {
-/*      应该不用这里做
-        dataPoint = initDataPoint(firstCenterX,firstCenterY);
-        initCtrlPoint(dataPoint);*/
-
         linePaint = new Paint();
         paint = new Paint();
         path = new Path();
         ripplePaint = new Paint();
+        setClickable(true);
     }
 
     /**
@@ -534,7 +554,6 @@ public class CustomViewGroup extends ViewGroup {
                     float d =  radius;
                     float k = d*0.25f/(s3-s4);
                     float b = d*0.25f-k*s3;
-                    Log.i(TAG,"--"+(k*mInterpolatedTime+b));
                     dataPoint[0].x = centerX-(d*3f/4f + k*mInterpolatedTime+b);
                     dataPoint[0].y = centerY;
 
@@ -549,7 +568,6 @@ public class CustomViewGroup extends ViewGroup {
                     float d = radius;
                     float k = -d*0.25f/(s4-1);
                     float b = -k*s4;
-                    Log.i(TAG,"--"+(k*mInterpolatedTime+b));
                     dataPoint[0].x = centerX-(d*3f/4f + k*mInterpolatedTime+b);
                     dataPoint[0].y = centerY;
 
@@ -694,7 +712,7 @@ public class CustomViewGroup extends ViewGroup {
             ripple(p, canvas);
         } else if (pointLimitQueue.size() == 2) {
             /** 队列有2个点则重置点的数据，并执行动画重绘界面*/
-            Log.i(TAG, " dispatchDraw 2  pointLimitQueue-" + pointLimitQueue.queue.toString());
+            Log.i(TAG, " dispatchDraw 2  pointLimitQueue-" + pointLimitQueue.queue.toString()+",mInterpolatedTime-"+mInterpolatedTime);
             /**麻烦事情 开始吧*/
             PointF pFirst = pointLimitQueue.get(0);
             PointF pLast = pointLimitQueue.get(1);
@@ -740,47 +758,14 @@ public class CustomViewGroup extends ViewGroup {
         handler.sendEmptyMessage(1);
     }
 
+    /**
+     * 事件分发
+     * @param ev
+     * @return
+     */
     @Override
     public boolean dispatchTouchEvent(MotionEvent ev) {
-        int a = ev.getAction();
-        switch (a) {
-            case MotionEvent.ACTION_DOWN:
-//                Log.e(TAG,"dispatchTouchEvent ACTION_DOWN");
-                break;
-            case MotionEvent.ACTION_MOVE:
-//                Log.e(TAG,"dispatchTouchEvent ACTION_MOVE");
-                break;
-            case MotionEvent.ACTION_UP:
-//                Log.e(TAG,"dispatchTouchEvent ACTION_UP");
-                break;
-        }
-
-        return super.dispatchTouchEvent(ev);
-    }
-
-    @Override
-    public boolean onTouchEvent(MotionEvent event) {
-        int a = event.getAction();
-        switch (a) {
-            case MotionEvent.ACTION_DOWN:
-                Log.e(TAG, "onTouchEvent ACTION_DOWN");
-                break;
-            case MotionEvent.ACTION_MOVE:
-//                Log.e(TAG,"onTouchEvent ACTION_MOVE");
-                break;
-            case MotionEvent.ACTION_UP:
-//                Log.e(TAG,"onTouchEvent ACTION_UP");
-                break;
-        }
-        return super.onTouchEvent(event);
-    }
-
-    @Override
-    public boolean onInterceptTouchEvent(MotionEvent ev) {
-        if (state == STATE_MOVING || rippleState == STATE_MOVING) {
-            //当某一个动画在进行中,直接return掉，并不是所有触摸事件无效，而是下面的代码无效嗯
-            return super.onInterceptTouchEvent(ev);
-        }
+        Log.e(TAG,"dispatchTouchEvent");
         int a = ev.getAction();
         switch (a) {
             case MotionEvent.ACTION_DOWN:
@@ -789,7 +774,8 @@ public class CustomViewGroup extends ViewGroup {
                 PointF p = new PointF();
                 Log.i(TAG, "p-" + ex + "," + ey);
                 View v = isInChildView(ex, ey);
-                if (v != null) {
+                if (v != null&&!isTranslateOrRippleInProgress()) {
+                    /** 当且仅当 触摸点DOWN在子View内 以及动画结束的时候进入*/
                     /** 当触摸点DOWN在子View内，触发一个描边波浪效果 */
                     startRipple();
                     int top = v.getTop();
@@ -808,12 +794,73 @@ public class CustomViewGroup extends ViewGroup {
                     //一个点以上，则开始圆形平移的动画
                     startCircleMoving();
                 }
+                Log.e(TAG, "dispatchTouchEvent ACTION_DOWN");
+                break;
+            case MotionEvent.ACTION_MOVE:
+//                Log.e(TAG,"dispatchTouchEvent ACTION_MOVE");
+                break;
+            case MotionEvent.ACTION_UP:
+//                Log.e(TAG,"dispatchTouchEvent ACTION_UP");
+                break;
+        }
+/*        if(isTranslateOrRippleInProgress()){
+            Log.e(TAG,"动画进行中");
+            return true;
+        }*/
+        return super.dispatchTouchEvent(ev);
+    }
+
+    /**
+     * 事件处理
+     * @param event
+     * @return
+     */
+    @Override
+    public boolean onTouchEvent(MotionEvent event) {
+        Log.e(TAG, "onTouchEvent");// TODO: 2017/2/6 当 onInterceptTouchEvent返回true，这里怎么没有被触发？
+        int a = event.getAction();
+        switch (a) {
+            case MotionEvent.ACTION_DOWN:
+                Log.e(TAG, "onTouchEvent ACTION_DOWN");
+                break;
+            case MotionEvent.ACTION_MOVE:
+//                Log.e(TAG,"onTouchEvent ACTION_MOVE");
+                break;
+            case MotionEvent.ACTION_UP:
+//                Log.e(TAG,"onTouchEvent ACTION_UP");
+                break;
+        }
+        return super.onTouchEvent(event);
+    }
+
+    /**
+     * 事件拦截
+     * @param ev
+     * @return
+     */
+    @Override
+    public boolean onInterceptTouchEvent(MotionEvent ev) {
+        //以前在这里做点队列的操作，存在不合理的地方
+        Log.e(TAG,"onInterceptTouchEvent");
+        //TODO:错！bug,要分发到子View，但是子View来根据外部接口知道动画是否进行中，来选择处不处理这些事件
+/*        if (state == STATE_MOVING || rippleState == STATE_MOVING) {
+            //当某一个动画在进行中,直接return true;不分发事件到子View
+            return false;
+        }*/
+        int a = ev.getAction();
+        switch (a) {
+            case MotionEvent.ACTION_DOWN:
                 Log.e(TAG, "onInterceptTouchEvent ACTION_DOWN");
                 break;
             case MotionEvent.ACTION_MOVE:
 //                Log.e(TAG,"onInterceptTouchEvent ACTION_MOVE");
                 break;
             case MotionEvent.ACTION_UP:
+                if(isTranslateOrRippleInProgress()
+                        &&pointLimitQueue.getLast().equals(getChildViewCenterPointToQueue(getAttachView().getCurrentPageIndex()))){
+                    /** 当且仅当 动画进行中以及当前滑动的终点页面的下标所对应的PointF是点队列中的最后一个时候，不需要传递事件给子View,*/
+                    return true;
+                }
 //                Log.e(TAG,"onInterceptTouchEvent ACTION_UP");
                 break;
         }
@@ -893,6 +940,20 @@ public class CustomViewGroup extends ViewGroup {
         p.x = left + (right - left) / 2f;
         p.y = top + (bottom - top) / 2f;
         pointLimitQueue.offer(p);
+//        Log.i(TAG,"ps 2-"+pointLimitQueue.queue.toString());
+        return p;
+    }
+
+    public PointF getChildViewCenterPointToQueue(int index) {
+//        Log.i(TAG,"ps 1-"+pointLimitQueue.queue.toString());
+        View childView = getChildAt(index);
+        int top = childView.getTop();
+        int bottom = childView.getBottom();
+        int left = childView.getLeft();
+        int right = childView.getRight();
+        PointF p = new PointF();
+        p.x = left + (right - left) / 2f;
+        p.y = top + (bottom - top) / 2f;
 //        Log.i(TAG,"ps 2-"+pointLimitQueue.queue.toString());
         return p;
     }
@@ -982,7 +1043,7 @@ public class CustomViewGroup extends ViewGroup {
     /**
      * 平移动画类
      */
-    private class TranslteAnimaton extends Animation {
+    private class TranslateAnimation extends Animation {
         @Override
         public void initialize(int width, int height, int parentWidth, int parentHeight) {
             super.initialize(width, height, parentWidth, parentHeight);
@@ -995,13 +1056,13 @@ public class CustomViewGroup extends ViewGroup {
 //            Log.e(TAG,"interpolatedTime "+interpolatedTime);
             mInterpolatedTime = interpolatedTime;
             if (mInterpolatedTime > 0) {
-                state = STATE_START;
+                translateState = STATE_START;
             }
             if (mInterpolatedTime == 1) {
-                state = STATE_STOP;
+                translateState = STATE_STOP;
             }
             if (mInterpolatedTime < 1) {
-                state = STATE_MOVING;
+                translateState = STATE_MOVING;
             }
             if (mInterpolatedTime != 1) {
                 //如果执行事件不是1的话，持续执行重绘
@@ -1018,10 +1079,10 @@ public class CustomViewGroup extends ViewGroup {
     /**
      * 开始弹性平移动画
      */
-    public void startTranslteAnimaton() {
+    public void startTranslateAnimation() {
         mInterpolatedTime = 0;
         move.setDuration(1000);
-        move.setAnimationListener(new TranslteAnimatonListener());
+        move.setAnimationListener(new TranslateAnimatonListener());
         move.setInterpolator(new AccelerateDecelerateInterpolator());
         startAnimation(move);
     }
@@ -1072,7 +1133,7 @@ public class CustomViewGroup extends ViewGroup {
      * 平移动画的监听器
      * 在结束的时候，停止平移的定时器，并且启动描边波浪的动画
      */
-    class TranslteAnimatonListener implements Animation.AnimationListener {
+    class TranslateAnimatonListener implements Animation.AnimationListener {
 
         @Override
         public void onAnimationStart(Animation animation) {
@@ -1080,6 +1141,7 @@ public class CustomViewGroup extends ViewGroup {
 
         @Override
         public void onAnimationEnd(Animation animation) {
+            Log.e("TranslateListener", "onAnimationEnd " + translateState);
             handler.sendEmptyMessage(1);//结束定时器
             handler.sendEmptyMessage(3);//开启描边波浪效果
         }

@@ -210,7 +210,13 @@ public class CircleButton extends View {
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
+        CustomViewGroup parent = (CustomViewGroup)getParent();
+        SlidingViewGroup slidingViewGroup = (SlidingViewGroup)getAttachView();
         int a = event.getAction();
+        if(parent.isTranslateOrRippleInProgress()&&a==MotionEvent.ACTION_UP){
+            Log.e(TAG,"在动画进行中");
+//            setClickable(false);
+        }
         switch (a){
             case MotionEvent.ACTION_DOWN:
                 Log.e(TAG,"onTouchEvent ACTION_DOWN");
@@ -219,9 +225,8 @@ public class CircleButton extends View {
 //                Log.e(TAG,"onTouchEvent ACTION_MOVE");
                 break;
             case MotionEvent.ACTION_UP:
-                SlidingViewGroup slidingViewGroup = (SlidingViewGroup)getAttachView();
+
                 int pageIndex = slidingViewGroup.getCurrentPageIndex();
-                CustomViewGroup parent = (CustomViewGroup)getParent();
                 int childIndex =  parent.indexOfChild(this);
                 Log.i(TAG,"onTouchEvent ACTION_UP "+pageIndex+" moveTo "+childIndex);
                 slidingViewGroup.moveTo(pageIndex,childIndex);
