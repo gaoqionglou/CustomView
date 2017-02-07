@@ -840,29 +840,11 @@ public class CustomViewGroup extends ViewGroup {
      */
     @Override
     public boolean onInterceptTouchEvent(MotionEvent ev) {
-        //以前在这里做点队列的操作，存在不合理的地方
         Log.e(TAG,"onInterceptTouchEvent");
-        //TODO:错！bug,要分发到子View，但是子View来根据外部接口知道动画是否进行中，来选择处不处理这些事件
-/*        if (state == STATE_MOVING || rippleState == STATE_MOVING) {
-            //当某一个动画在进行中,直接return true;不分发事件到子View
-            return false;
-        }*/
-        int a = ev.getAction();
-        switch (a) {
-            case MotionEvent.ACTION_DOWN:
-                Log.e(TAG, "onInterceptTouchEvent ACTION_DOWN");
-                break;
-            case MotionEvent.ACTION_MOVE:
-//                Log.e(TAG,"onInterceptTouchEvent ACTION_MOVE");
-                break;
-            case MotionEvent.ACTION_UP:
-                if(isTranslateOrRippleInProgress()
-                        &&pointLimitQueue.getLast().equals(getChildViewCenterPointToQueue(getAttachView().getCurrentPageIndex()))){
-                    /** 当且仅当 动画进行中以及当前滑动的终点页面的下标所对应的PointF是点队列中的最后一个时候，不需要传递事件给子View,*/
+        if(isTranslateOrRippleInProgress()
+                &&pointLimitQueue.getLast().equals(getChildViewCenterPointToQueue(getAttachView().getCurrentPageIndex()))){
+            /** 当且仅当 动画进行中以及当前滑动的终点页面的下标所对应的PointF是点队列中的最后一个时候，不需要传递事件给子View,*/
                     return true;
-                }
-//                Log.e(TAG,"onInterceptTouchEvent ACTION_UP");
-                break;
         }
         return super.onInterceptTouchEvent(ev);
     }
