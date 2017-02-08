@@ -33,7 +33,7 @@ public class CustomViewGroup extends ViewGroup {
      * 一个常量，用来计算绘制圆形贝塞尔曲线控制点的位置
      */
     private static final float C = 0.551915024494f;
-    private float radius = 20;
+    private float radius = 140f;
     /**
      * 圆形的控制点与数据点的差值
      */
@@ -44,8 +44,11 @@ public class CustomViewGroup extends ViewGroup {
     private float firstCenterX, firstCenterY;
     private Paint linePaint;
     private Paint paint;
-    private Paint ripplePaint;//环涟漪画笔
+    private Paint ripplePaint;//描边波浪，环涟漪画笔
     private Path path;
+    private int mWidth = 0;
+    private int mHeight=0;
+
     /**
      * 圆的4个点
      */
@@ -201,9 +204,6 @@ public class CustomViewGroup extends ViewGroup {
         /**
          * 下面处理ViewGroup 长宽是wrapcontent
          */
-        int width = 0;
-        int height = 0;
-        MarginLayoutParams layoutParams = null;
         int counts = getChildCount();
         measure(widthMode, heightMode, widthSize, heightSize, counts);
 
@@ -223,6 +223,8 @@ public class CustomViewGroup extends ViewGroup {
         if (widthMode == MeasureSpec.EXACTLY && heightMode == MeasureSpec.EXACTLY) {
             //MATCH_PARENT 设置为上层容器推荐的长 宽
 //           Log.e(TAG,"ViewGroup,w-"+widthSize+",h-"+heightSize);
+            mWidth = widthSize;
+            mHeight= heightSize;
             setMeasuredDimension(widthSize, heightSize);
             return;
         }
@@ -255,6 +257,8 @@ public class CustomViewGroup extends ViewGroup {
             width = widthSize;
         }
 //        Log.e(TAG,"ViewGroup,w-"+width+",h-"+height);
+        mWidth = width;
+        mHeight= height;
         setMeasuredDimension(width, height);
     }
 
@@ -271,14 +275,21 @@ public class CustomViewGroup extends ViewGroup {
     protected void onLayout(boolean changed, int l, int t, int r, int b) {
         //将子View横向排列
         int w = l;//坐标
-        for (int i = 0; i < getChildCount(); i++) {
-            CircleButton childView = (CircleButton) getChildAt(i);
+        float d =  mWidth/getChildCount();
+        float diff = 0;
+        for (int i = 1; i <=getChildCount(); i++) {
+            CircleButton childView = (CircleButton) getChildAt(i-1);
             radius = childView.getRadius();
             int childWith = childView.getMeasuredWidth();
             int childHeight = childView.getMeasuredHeight();
             MarginLayoutParams clp = (MarginLayoutParams) childView.getLayoutParams();
+            Log.e(TAG,"-DIFF-"+diff);
+            float left = d*i-d/2-radius;
+            float right = left+2*radius;
             w += childWith + clp.leftMargin + clp.rightMargin;
-            childView.layout(w - childWith, t, w, childHeight);
+            Log.e(TAG,"left-"+left+",top-"+t+",right-"+right+",height-"+childHeight);
+            childView.layout((int)left/*w - childWith*/, t, /*w*/(int)right, childHeight);
+
         }
 
     }

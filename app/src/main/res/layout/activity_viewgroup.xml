@@ -49,7 +49,7 @@
                 android:layout_height="wrap_content"
                 android:layout_margin="10dp"
                 circleButton:backgroundDrawable="@drawable/ic_exposure_plus_2_black_24dp"
-                circleButton:radius="30dp" />
+                circleButton:radius="40dp" />
 
             <com.gaoql.customview.CircleButton
                 android:id="@+id/btn2"
@@ -57,7 +57,7 @@
                 android:layout_height="wrap_content"
                 android:layout_margin="10dp"
                 circleButton:backgroundDrawable="@drawable/ic_exposure_plus_1_black_24dp"
-                circleButton:radius="30dp" />
+                circleButton:radius="40dp" />
 
             <com.gaoql.customview.CircleButton
                 android:id="@+id/btn3"
@@ -65,7 +65,7 @@
                 android:layout_height="wrap_content"
                 android:layout_margin="10dp"
                 circleButton:backgroundDrawable="@drawable/ic_exposure_zero_black_24dp"
-                circleButton:radius="30dp" />
+                circleButton:radius="40dp" />
         </com.gaoql.customview.CustomViewGroup>
     </com.gaoql.customview.CustomRelativeLayout>
 </RelativeLayout>
