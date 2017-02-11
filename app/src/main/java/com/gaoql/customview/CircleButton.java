@@ -3,30 +3,26 @@ package com.gaoql.customview;
 import android.content.Context;
 import android.content.res.TypedArray;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.BitmapShader;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Matrix;
 import android.graphics.Paint;
-import android.graphics.Path;
 import android.graphics.PixelFormat;
 import android.graphics.Shader;
-import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
-import android.graphics.drawable.TransitionDrawable;
-import android.graphics.drawable.VectorDrawable;
 import android.util.AttributeSet;
 import android.util.Log;
-import android.util.TypedValue;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.animation.Animation;
-import android.view.animation.LinearInterpolator;
 
 import com.gaoql.R;
 
-
+/**
+ * 圆形控件
+ * @author gql
+ */
 public class CircleButton extends View {
     public static final String TAG="GAOVG-CircleButton";
     private int mWidth;
@@ -210,8 +206,8 @@ public class CircleButton extends View {
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
-        CustomViewGroup parent = (CustomViewGroup)getParent();
-        SlidingViewGroup slidingViewGroup = (SlidingViewGroup)getAttachView();
+        CustomPagerIndicator parent = (CustomPagerIndicator)getParent();
+        SlidingViewPager slidingViewPager = (SlidingViewPager)getAttachView();
         int a = event.getAction();
         if(parent.isTranslateOrRippleInProgress()&&a==MotionEvent.ACTION_UP){
             Log.e(TAG,"在动画进行中");
@@ -226,10 +222,10 @@ public class CircleButton extends View {
                 break;
             case MotionEvent.ACTION_UP:
 
-                int pageIndex = slidingViewGroup.getCurrentPageIndex();
+                int pageIndex = slidingViewPager.getCurrentPageIndex();
                 int childIndex =  parent.indexOfChild(this);
                 Log.i(TAG,"onTouchEvent ACTION_UP "+pageIndex+" moveTo "+childIndex);
-                slidingViewGroup.moveTo(pageIndex,childIndex);
+                slidingViewPager.moveTo(pageIndex,childIndex);
                 break;
         }
         return super.onTouchEvent(event);

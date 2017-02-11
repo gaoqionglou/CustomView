@@ -2,10 +2,7 @@ package com.gaoql.customview;
 
 import android.content.Context;
 import android.graphics.Bitmap;
-import android.graphics.BitmapShader;
 import android.graphics.Canvas;
-import android.graphics.Color;
-import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.PixelFormat;
 import android.graphics.drawable.Drawable;
@@ -14,15 +11,13 @@ import android.util.Log;
 import android.view.MotionEvent;
 import android.widget.RelativeLayout;
 
-import java.util.List;
-
 /**
  * Created by admin on 2016/12/24.
  */
 
 public class CustomRelativeLayout extends RelativeLayout {
     public static final String TAG="CustomRelativeLayout";
-    private CustomViewGroup customViewGroup;
+    private CustomPagerIndicator customPagerIndicator;
     private Paint p;
     public CustomRelativeLayout(Context context) {
         super(context);
@@ -71,7 +66,7 @@ public class CustomRelativeLayout extends RelativeLayout {
             Log.e(TAG,"Stub!");
             return;
         }
-        customViewGroup = (CustomViewGroup) getChildAt(0);
+        customPagerIndicator = (CustomPagerIndicator) getChildAt(0);
         super.onLayout(changed, l, t, r, b);
     }
 
@@ -91,10 +86,10 @@ public class CustomRelativeLayout extends RelativeLayout {
     }
 
     private void drawLayer(Canvas canvas){
-        customViewGroup = (CustomViewGroup) getChildAt(0);
+        customPagerIndicator = (CustomPagerIndicator) getChildAt(0);
         //用于绘制icon...
-        for(int i=0;i<customViewGroup.getChildCount();i++){
-            CircleButton circleButton = (CircleButton)customViewGroup.getChildAt(i);
+        for(int i = 0; i< customPagerIndicator.getChildCount(); i++){
+            CircleButton circleButton = (CircleButton) customPagerIndicator.getChildAt(i);
             int top =  circleButton.getTop();
             int bottom = circleButton.getBottom();
             int left = circleButton.getLeft();

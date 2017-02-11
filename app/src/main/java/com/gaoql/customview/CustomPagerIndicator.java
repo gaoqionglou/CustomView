@@ -27,7 +27,7 @@ import java.util.List;
  * @author gql
  */
 
-public class CustomViewGroup extends/* ViewGroup*/LinearLayout {
+public class CustomPagerIndicator extends/* ViewGroup*/LinearLayout {
     public static final String TAG = "GAOVG-CustomViewGroup";
     /**
      * 一个常量，用来计算绘制圆形贝塞尔曲线控制点的位置
@@ -93,7 +93,7 @@ public class CustomViewGroup extends/* ViewGroup*/LinearLayout {
      */
     private float mInterpolatedTime = 0f;//0-1的播放时间
     private float rippleInterpolatedTime = 0f;//0-1的播放时间
-    private SlidingViewGroup attachView;
+    private SlidingViewPager attachView;
     /**
      * 圆的平移过程x,y的斜率
      */
@@ -140,15 +140,15 @@ public class CustomViewGroup extends/* ViewGroup*/LinearLayout {
         }
     };
 
-    public CustomViewGroup(Context context) {
+    public CustomPagerIndicator(Context context) {
         this(context, null);
     }
 
-    public CustomViewGroup(Context context, AttributeSet attrs) {
+    public CustomPagerIndicator(Context context, AttributeSet attrs) {
         this(context, attrs,0);
     }
 
-    public CustomViewGroup(Context context, AttributeSet attrs, int defStyleAttr) {
+    public CustomPagerIndicator(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
         initData();
     }
@@ -161,11 +161,11 @@ public class CustomViewGroup extends/* ViewGroup*/LinearLayout {
         return rippleState;
     }
 
-    public SlidingViewGroup getAttachView() {
+    public SlidingViewPager getAttachView() {
         return attachView;
     }
 
-    public void setAttachView(SlidingViewGroup attachView) {
+    public void setAttachView(SlidingViewPager attachView) {
         this.attachView = attachView;
     }
 

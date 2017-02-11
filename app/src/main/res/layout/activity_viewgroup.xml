@@ -3,7 +3,7 @@
     android:background="#969696"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
-    <com.gaoql.customview.SlidingViewGroup
+    <com.gaoql.customview.SlidingViewPager
         android:id="@+id/slidingViewGroup"
         android:layout_width="match_parent"
         android:background="#FFFFFF"
@@ -11,25 +11,28 @@
         android:layout_height="match_parent">
 
         <ImageView
+            android:id="@+id/iv1"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:background="@drawable/ic_exposure_plus_2_black_24dp"
             android:clickable="true"
             />
         <ImageView
+            android:id="@+id/iv2"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:background="@drawable/ic_exposure_plus_1_black_24dp"
             android:clickable="true"
             />
         <ImageView
+            android:id="@+id/iv3"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:background="@drawable/ic_exposure_zero_black_24dp"
             android:clickable="true"
             />
 
-    </com.gaoql.customview.SlidingViewGroup>
+    </com.gaoql.customview.SlidingViewPager>
 
     <com.gaoql.customview.CustomRelativeLayout
         android:id="@+id/customRelativeLayout"
@@ -38,7 +41,7 @@
         android:layout_height="wrap_content"
         android:background="#969696">
 
-        <com.gaoql.customview.CustomViewGroup
+        <com.gaoql.customview.CustomPagerIndicator
             xmlns:circleButton="http://schemas.android.com/apk/res-auto"
             android:id="@+id/customviewgroup"
             android:orientation="horizontal"
@@ -69,6 +72,6 @@
                 android:layout_margin="10dp"
                 circleButton:backgroundDrawable="@drawable/ic_exposure_zero_black_24dp"
                 circleButton:radius="40dp" />
-        </com.gaoql.customview.CustomViewGroup>
+        </com.gaoql.customview.CustomPagerIndicator>
     </com.gaoql.customview.CustomRelativeLayout>
 </RelativeLayout>

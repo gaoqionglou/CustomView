@@ -13,7 +13,7 @@ import android.view.ViewGroup;
 import android.widget.Scroller;
 
 
-public class SlidingViewGroup extends ViewGroup implements GestureDetector.OnGestureListener{
+public class SlidingViewPager extends ViewGroup implements GestureDetector.OnGestureListener{
     public static final String TAG="SlidingViewGroup";
     private GestureDetector gestureDetector ;
     private Scroller mScroller;
@@ -26,20 +26,21 @@ public class SlidingViewGroup extends ViewGroup implements GestureDetector.OnGes
     private int minFlingVelocity = 0;
     private float dx;
     private boolean isFirst = true;
-    private CustomViewGroup indicator;
-    public SlidingViewGroup(Context context) {
+    private CustomPagerIndicator indicator;
+    private boolean mIsDraging =false;
+    public SlidingViewPager(Context context) {
         this(context,null);
     }
 
-    public SlidingViewGroup(Context context, AttributeSet attrs) {
+    public SlidingViewPager(Context context, AttributeSet attrs) {
         this(context,attrs,0);
     }
 
-    public SlidingViewGroup(Context context, AttributeSet attrs, int defStyleAttr) {
+    public SlidingViewPager(Context context, AttributeSet attrs, int defStyleAttr) {
         this(context,attrs,defStyleAttr,0);
     }
 
-    public SlidingViewGroup(Context context, AttributeSet attrs, int defStyleAttr, int defStyleRes) {
+    public SlidingViewPager(Context context, AttributeSet attrs, int defStyleAttr, int defStyleRes) {
         super(context, attrs, defStyleAttr, defStyleRes);
         setClickable(true);
         init(context);
@@ -67,7 +68,7 @@ public class SlidingViewGroup extends ViewGroup implements GestureDetector.OnGes
      * 获取指示器
      * @return
      */
-    public CustomViewGroup getIndicator() {
+    public CustomPagerIndicator getIndicator() {
         return indicator;
     }
 
@@ -75,7 +76,7 @@ public class SlidingViewGroup extends ViewGroup implements GestureDetector.OnGes
      * 为ViewPager指定一个指示器
      * @param indicator
      */
-    public void setIndicator(CustomViewGroup indicator) {
+    public void setIndicator(CustomPagerIndicator indicator) {
         this.indicator = indicator;
         for(int i=0;i<indicator.getChildCount();i++){
             CircleButton childView = (CircleButton)indicator.getChildAt(i);
@@ -190,16 +191,11 @@ public class SlidingViewGroup extends ViewGroup implements GestureDetector.OnGes
     @Override
     public boolean onInterceptTouchEvent(MotionEvent ev) {
         //TODO :暂时不分发事件，自己处理 -.-，进入onTouchEvent中
-        return !super.onInterceptTouchEvent(ev);
-    }
-
-    @Override
-    public boolean onTouchEvent(MotionEvent event) {
-        obtainVelocityTracker(event);
-        int action = event.getAction();
-        float x = event.getRawX();//拿相对于屏幕的x坐标
-        float ex = event.getX();
-        float ey = event.getY();
+        obtainVelocityTracker(ev);
+        int action = ev.getAction();
+        float x = ev.getRawX();//拿相对于屏幕的x坐标
+        float ex = ev.getX();
+        float ey = ev.getY();
         switch (action){
             case MotionEvent.ACTION_DOWN:
 /**                手指按下，获取偏移量 更新x坐标*/
@@ -281,7 +277,100 @@ public class SlidingViewGroup extends ViewGroup implements GestureDetector.OnGes
             default:
                 break;
         }
-        return gestureDetector.onTouchEvent(event);
+        boolean a = gestureDetector.onTouchEvent(ev);
+
+        return super.onInterceptTouchEvent(ev);
+    }
+
+    @Override
+    public boolean onTouchEvent(MotionEvent event) {
+//        obtainVelocityTracker(event);
+//        int action = event.getAction();
+//        float x = event.getRawX();//拿相对于屏幕的x坐标
+//        float ex = event.getX();
+//        float ey = event.getY();
+//        switch (action){
+//            case MotionEvent.ACTION_DOWN:
+///**                手指按下，获取偏移量 更新x坐标*/
+////                Log.e(TAG,"onTouchEvent ACTION_DOWN");
+////                Log.e(TAG,"onTouchEvent ACTION_DOWN getScrollX - "+getScrollX());
+//                offsetX=getScrollX();
+//                lastX = x;
+//                break;
+//            case MotionEvent.ACTION_UP:
+////                Log.e(TAG,"onTouchEvent ACTION_UP getScrollX - "+getScrollX());
+//                View childView = getChildAt(0);
+//                int width = childView.getRight()-childView.getLeft();
+//                int scrollX =  getScrollX();
+//                int delta = scrollX - offsetX;
+//                //计算出一秒移动1000像素的速率 1000 表示每秒多少像素（pix/second),1代表每微秒多少像素（pix/millisecond)
+//                velocityTracker.computeCurrentVelocity(1000, configuration.getScaledMaximumFlingVelocity());
+//                float velocityX = velocityTracker.getXVelocity();
+//                float velocityY = velocityTracker.getYVelocity();
+//                //TODO:暂时用子View的三分之一，后续改成屏幕的三分一
+//                if(Math.abs(delta)<width/3){
+//                    /** 小于三分之一，弹回去 */
+//                    Log.e(TAG,"onTouchEvent ACTION_UP back 1  ");
+//                    mScroller.startScroll(scrollX, 0, -delta, 0,1000);
+//                    invalidate();
+//                }else if(Math.abs(velocityX)<=configuration.getScaledMinimumFlingVelocity()&&Math.abs(velocityY)<=configuration.getScaledMinimumFlingVelocity()){
+//                    //当速度小于系统速度，但过了三分一的距离，此时应该滑动一页
+//                    Log.e(TAG,"onTouchEvent ACTION_UP back 2  ");
+//                    if(isFirst){
+//                        Log.e(TAG,"onTouchEvent ACTION_UP back 2-0  ");
+//                        isFirst=false;
+//                        currentPageIndex++;
+//                        int dx = width - delta;
+//                        mScroller.startScroll(scrollX, 0, dx, 0, 1000);
+//                        invalidate();
+//                        indicator.addChildViewCenterPointToQueue(currentPageIndex);
+//                        indicator.startCircleMoving();
+//                        break;
+//                    }
+//
+//                    if(Math.signum(delta)>0){ //左滑趋势
+//                        if(currentPageIndex >0) {
+//                            currentPageIndex++;
+//                            isFirst=false;
+//                            Log.e(TAG, "onTouchEvent ACTION_UP back 2-1  ");
+//                            int dx = width - delta;
+//                            mScroller.startScroll(scrollX, 0, dx, 0, 1000);
+//                            invalidate();
+//                        }
+//                    }else{//右滑趋势
+//                        if(currentPageIndex < getChildCount()) {
+//                            isFirst=false;
+//                            currentPageIndex--;
+//                            Log.e(TAG, "onTouchEvent ACTION_UP back 2-2  ");
+//                            int dx = width + delta;
+//                            mScroller.startScroll(scrollX, 0, -dx, 0, 1000);
+//                            invalidate();
+//                        }
+//                    }
+////                    mScroller.startScroll(scrollX, 0, -delta, 0,1000);
+//                    indicator.addChildViewCenterPointToQueue(currentPageIndex);
+//                    indicator.startCircleMoving();
+//                }
+//                break;
+//            case MotionEvent.ACTION_MOVE:
+//                /** 拖动的时候*/
+//                dx = x-lastX;
+////                Log.e(TAG,"onTouchEvent ACTION_MOVE dx - "+dx+",x - "+x+",lastX - "+lastX+",currentPageIndex--"+currentPageIndex);
+//                lastX = x;
+//
+//                if(currentPageIndex==0&&dx>0 || currentPageIndex==getChildCount()-1&&dx<0){
+//                    break;
+//                }
+//                scrollBy((int)-dx,0);/** 在当前位置的基础上，偏移到(-dx,0)的位置，那么看起来有被拖拽的效果...*/
+//                break;
+//            case MotionEvent.ACTION_CANCEL://TODO:事件被上层拦截时触发。那么用来注销VelocityTracker？
+//                realseVelocityTracker();
+////                scrollTo(getScrollX(),0);
+//                break;
+//            default:
+//                break;
+//        }
+        return super.onTouchEvent(event)/*gestureDetector.onTouchEvent(event)*/;
     }
 
     /**
