@@ -23,8 +23,6 @@ import java.util.List;
 public class CustomRelativeLayout extends RelativeLayout {
     public static final String TAG="CustomRelativeLayout";
     private CustomViewGroup customViewGroup;
-    private List<BitmapShader> bitmapShaders;
-    private Matrix matrix;
     private Paint p;
     public CustomRelativeLayout(Context context) {
         super(context);
@@ -94,32 +92,16 @@ public class CustomRelativeLayout extends RelativeLayout {
 
     private void drawLayer(Canvas canvas){
         customViewGroup = (CustomViewGroup) getChildAt(0);
-        Paint p1 =  new Paint();
-        p1.setColor(Color.RED);
-        p1.setStrokeWidth(5);
+        //用于绘制icon...
         for(int i=0;i<customViewGroup.getChildCount();i++){
-
             CircleButton circleButton = (CircleButton)customViewGroup.getChildAt(i);
             int top =  circleButton.getTop();
             int bottom = circleButton.getBottom();
             int left = circleButton.getLeft();
             int right = circleButton.getRight();
-//            Log.e(TAG,top+","+bottom+","+left+","+right);
-            int width = right - left;
-            int height = bottom-top;
             Drawable drawable = circleButton.getDrawable();
             Bitmap bitmap = drawableToBitmap(drawable);
-            canvas.drawBitmap(bitmap,left+circleButton.getRadius()-bitmap.getWidth()/2,top+circleButton.getRadius()-bitmap.getHeight()/2,p1);
-//            int size =  Math.min(bitmap.getWidth(),bitmap.getHeight());
-//            float scale = width*1f/size;
-//            BitmapShader shader = new BitmapShader(bitmap, Shader.TileMode.CLAMP, Shader.TileMode.CLAMP);
-//            Matrix matrix = new Matrix();
-//            matrix.postScale(scale,scale);
-//            shader.setLocalMatrix(matrix);
-//            p.setShader(shader);
-//            float cx = left+circleButton.getRadius();
-//            canvas.drawCircle(cx,circleButton.getRadius(),circleButton.getRadius(),p);
-//            Log.e(TAG,"cx-"+cx+",cy-"+circleButton.getRadius());
+            canvas.drawBitmap(bitmap,left+circleButton.getRadius()-bitmap.getWidth()/2,top+circleButton.getRadius()-bitmap.getHeight()/2,p);
         }
 
     }
