@@ -38,8 +38,11 @@
         android:layout_height="wrap_content"
         android:background="#969696">
 
-        <com.gaoql.customview.CustomViewGroup xmlns:circleButton="http://schemas.android.com/apk/res-auto"
+        <com.gaoql.customview.CustomViewGroup
+            xmlns:circleButton="http://schemas.android.com/apk/res-auto"
             android:id="@+id/customviewgroup"
+            android:orientation="horizontal"
+            android:gravity="center_horizontal"
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
 

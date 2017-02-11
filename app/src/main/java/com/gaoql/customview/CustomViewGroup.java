@@ -12,10 +12,10 @@ import android.util.AttributeSet;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
-import android.view.ViewGroup;
 import android.view.animation.AccelerateDecelerateInterpolator;
 import android.view.animation.Animation;
 import android.view.animation.Transformation;
+import android.widget.LinearLayout;
 
 import com.gaoql.R;
 
@@ -27,7 +27,7 @@ import java.util.List;
  * @author gql
  */
 
-public class CustomViewGroup extends ViewGroup {
+public class CustomViewGroup extends/* ViewGroup*/LinearLayout {
     public static final String TAG = "GAOVG-CustomViewGroup";
     /**
      * 一个常量，用来计算绘制圆形贝塞尔曲线控制点的位置
@@ -193,10 +193,10 @@ public class CustomViewGroup extends ViewGroup {
         /**
          * 获得此ViewGroup上级容器为其推荐的宽和高，以及计算模式
          */
-        int widthMode = MeasureSpec.getMode(widthMeasureSpec);
+       /* int widthMode = MeasureSpec.getMode(widthMeasureSpec);
         int heightMode = MeasureSpec.getMode(heightMeasureSpec);
         int widthSize = MeasureSpec.getSize(widthMeasureSpec);
-        int heightSize = MeasureSpec.getSize(heightMeasureSpec);
+        int heightSize = MeasureSpec.getSize(heightMeasureSpec);*/
         /**
          * 算出所有的childView的宽和高,
          */
@@ -204,8 +204,8 @@ public class CustomViewGroup extends ViewGroup {
         /**
          * 下面处理ViewGroup 长宽是wrapcontent
          */
-        int counts = getChildCount();
-        measure(widthMode, heightMode, widthSize, heightSize, counts);
+        /*int counts = getChildCount();
+        measure(widthMode, heightMode, widthSize, heightSize, counts);*/
 
     }
 
@@ -273,8 +273,9 @@ public class CustomViewGroup extends ViewGroup {
      */
     @Override
     protected void onLayout(boolean changed, int l, int t, int r, int b) {
+        super.onLayout(changed,l,t,r,b);
         //将子View横向排列
-        int w = l;//坐标
+        /*int w = l;//坐标
         float d =  mWidth/getChildCount();
         float diff = 0;
         for (int i = 1; i <=getChildCount(); i++) {
@@ -288,9 +289,9 @@ public class CustomViewGroup extends ViewGroup {
             float right = left+2*radius;
             w += childWith + clp.leftMargin + clp.rightMargin;
             Log.e(TAG,"left-"+left+",top-"+t+",right-"+right+",height-"+childHeight);
-            childView.layout((int)left/*w - childWith*/, t, /*w*/(int)right, childHeight);
+            childView.layout((int)left*//*w - childWith*//*, t, *//*w*//*(int)right, childHeight);
 
-        }
+        }*/
 
     }
 
@@ -959,7 +960,7 @@ public class CustomViewGroup extends ViewGroup {
         invalidate();
     }
 
-    @Override
+/*    @Override
     public LayoutParams generateLayoutParams(AttributeSet attrs) {
         return new MarginLayoutParams(getContext(), attrs);
     }
@@ -972,7 +973,7 @@ public class CustomViewGroup extends ViewGroup {
     @Override
     protected LayoutParams generateDefaultLayoutParams() {
         return new MarginLayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT);
-    }
+    }*/
 
 
     /**
