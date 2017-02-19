@@ -6,22 +6,6 @@
         <item name="colorPrimary">@color/colorPrimary</item>
         <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
         <item name="colorAccent">@color/colorAccent</item>
-        <item name="testViewStyle">@style/testViewStyle1</item>
-    </style>
-    <style name="text_flag_01">
-        <item name="android:layout_width">wrap_content</item>
-        <item name="android:layout_height">wrap_content</item>
-        <item name="android:layout_margin">4dp</item>
-        <item name="android:background">@drawable/flag_01</item>
-        <item name="android:textColor">#ffffff</item>
-    </style>
-    <style name="testViewStyle1">
-        <item name="testbackgroundd">@drawable/ghoul</item>
-        <item name="testradius">60dp</item>
-    </style>
-    <style name="DefualtCircleButton">
-        <item name="backgroundColor">@drawable/ghoul</item>
-        <item name="radius">60dp</item>
     </style>
 
 
