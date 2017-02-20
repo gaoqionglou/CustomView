@@ -4,6 +4,7 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.Path;
@@ -44,12 +45,12 @@ public class RotateLoadingDialog extends View {
     private void init(){
         mPaint = new Paint();
         mPaint.setStyle(Paint.Style.STROKE);
-        mPaint.setStrokeWidth(50);
+        mPaint.setStrokeWidth(20);
         mPath = new Path();
         mPathMeasure = new PathMeasure();
         mMatrix = new Matrix();
         BitmapFactory.Options options = new BitmapFactory.Options();
-        mBitmap = BitmapFactory.decodeResource(this.getResources(), R.drawable.arrow,options);
+        mBitmap = BitmapFactory.decodeResource(this.getResources(), R.mipmap.ic_flight,options);
     }
 
     @Override
@@ -71,8 +72,10 @@ public class RotateLoadingDialog extends View {
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
-        canvas.translate(mWidth/2,mHeight/2);
-        mPath.addCircle(0,0,radius, Path.Direction.CW);
+//        canvas.translate(mWidth/2,mHeight/2);
+        mPaint.setColor(Color.RED);
+        canvas.drawPoint(mWidth/2,mHeight/2,mPaint);
+        mPath.addCircle(0,0,200, Path.Direction.CW);
 
         mPathMeasure.setPath(mPath,false);
         currentValue+=0.005;
@@ -82,8 +85,14 @@ public class RotateLoadingDialog extends View {
         mPathMeasure.getPosTan(mPathMeasure.getLength()*currentValue,pos,tan);
         mMatrix.reset();
         float degrees = (float) (Math.atan2(tan[1], tan[0]) * 180.0 / Math.PI); // 计算图片旋转角度
-        mMatrix.postRotate(degrees,mBitmap.getWidth()/2,mHeight/2);
+        mMatrix.postRotate(degrees,mBitmap.getWidth()/2,mBitmap.getHeight()/2);
         mMatrix.postTranslate(pos[0]-mBitmap.getWidth()/2,pos[1]-mBitmap.getHeight()/2);
+
+
+//           mPathMeasure.getMatrix(mPathMeasure.getLength() * currentValue, mMatrix, PathMeasure.TANGENT_MATRIX_FLAG | PathMeasure.POSITION_MATRIX_FLAG);
+
+//        mMatrix.preTranslate(-mBitmap.getWidth() / 2, -mBitmap.getHeight() / 2);   // <-- 将图片绘制中心调整到与当前点重合(注意:此处是前乘pre)
+
         canvas.drawPath(mPath,mPaint);
         canvas.drawBitmap(mBitmap,mMatrix,mPaint);
         invalidate();
