@@ -855,7 +855,7 @@ public class CustomPagerIndicator extends/* ViewGroup*/LinearLayout {
         Log.e(TAG,"onInterceptTouchEvent");
         if(isTranslateOrRippleInProgress()
                 &&pointLimitQueue.getLast().equals(getChildViewCenterPointToQueue(getAttachView().getCurrentPageIndex()))){
-            /** 当且仅当 动画进行中以及当前滑动的终点页面的下标所对应的PointF是点队列中的最后一个时候，不需要传递事件给子View,*/
+            /** 当且仅当 动画进行中以及当前滑动的终点页面的下标所对应的PointF是点队列中的最后一个时候,不分发事件到子View，拦截掉，传递事件到自己的OnTouchEvent*/
                     return true;
         }
         return super.onInterceptTouchEvent(ev);
