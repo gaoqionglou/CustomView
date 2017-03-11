@@ -91,7 +91,7 @@ public class SlidingViewPager extends LinearLayout implements GestureDetector.On
         measureChildren(widthMeasureSpec,heightMeasureSpec);
         mWidth = getMeasuredWidth();
         mHeight = getMeasuredHeight();
-        scrollTo(0, currentPageIndex * mWidth);
+        scrollTo(currentPageIndex*mWidth, 0);
     }
 
     /**
