@@ -9,11 +9,11 @@ import android.view.MotionEvent;
 import android.view.VelocityTracker;
 import android.view.View;
 import android.view.ViewConfiguration;
-import android.view.ViewGroup;
+import android.widget.LinearLayout;
 import android.widget.Scroller;
 
 
-public class SlidingViewPager extends ViewGroup implements GestureDetector.OnGestureListener{
+public class SlidingViewPager extends LinearLayout implements GestureDetector.OnGestureListener{
     public static final String TAG="SlidingViewGroup";
     private GestureDetector gestureDetector ;
     private Scroller mScroller;
@@ -27,7 +27,7 @@ public class SlidingViewPager extends ViewGroup implements GestureDetector.OnGes
     private float dx;
     private boolean isFirst = true;
     private CustomPagerIndicator indicator;
-    private boolean mIsDraging =false;
+    private int mWidth,mHeight;
     public SlidingViewPager(Context context) {
         this(context,null);
     }
@@ -88,14 +88,10 @@ public class SlidingViewPager extends ViewGroup implements GestureDetector.OnGes
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
         super.onMeasure(widthMeasureSpec, heightMeasureSpec);
-
-        int widthSize = MeasureSpec.getSize(widthMeasureSpec);
-        int heightSize = MeasureSpec.getSize(heightMeasureSpec);
-        int widthMode = MeasureSpec.getMode(widthMeasureSpec);
-        int heightMode = MeasureSpec.getMode(heightMeasureSpec);
         measureChildren(widthMeasureSpec,heightMeasureSpec);
-        measure(widthSize,heightSize,widthMode,heightMode);
-
+        mWidth = getMeasuredWidth();
+        mHeight = getMeasuredHeight();
+        scrollTo(0, currentPageIndex * mWidth);
     }
 
     /**
@@ -119,7 +115,6 @@ public class SlidingViewPager extends ViewGroup implements GestureDetector.OnGes
         if(getChildCount()==0){
             setMeasuredDimension(width,height);
         }
-        int a = MeasureSpec.UNSPECIFIED;
         if(widthMode==MeasureSpec.EXACTLY&&heightMode==MeasureSpec.EXACTLY){
             //MATCH_PARENT 设置为上层容器推荐的长 宽
 //           Log.e(TAG,"ViewGroup,w-"+widthSize+",h-"+heightSize);
@@ -153,21 +148,12 @@ public class SlidingViewPager extends ViewGroup implements GestureDetector.OnGes
             width = widthSize;
         }
         setMeasuredDimension(width,height);
+        Log.e(TAG,"Layout: "+width+","+height);
     }
 
     @Override
     protected void onLayout(boolean changed, int l, int t, int r, int b) {
-        int left = l;
-        for(int n=0;n<getChildCount();n++){
-            View v = getChildAt(n);
-            int w = v.getMeasuredWidth();
-            int h = v.getMeasuredHeight();
-            MarginLayoutParams mlp = (MarginLayoutParams)getLayoutParams();
-            left+=w+mlp.rightMargin+mlp.leftMargin;
-            v.layout(left-w,t,left,h);
-//            Log.e(TAG,"CHILD onLayout: "+(n+1)+",l-"+(left-w)+",t-"+t+",r-"+left+",b-"+h);
-
-        }
+        super.onLayout( changed, l,  t, r,  b);
     }
 
     /** 2 绘制*/
@@ -300,21 +286,21 @@ public class SlidingViewPager extends ViewGroup implements GestureDetector.OnGes
             velocityTracker.recycle();
         }
     }
-    /** 4 布局  */
-    @Override
-    public LayoutParams generateLayoutParams(AttributeSet attrs) {
-        return new MarginLayoutParams(getContext(),attrs);
-    }
-
-    @Override
-    protected LayoutParams generateLayoutParams(LayoutParams p) {
-        return new MarginLayoutParams(p);
-    }
-
-    @Override
-    protected LayoutParams generateDefaultLayoutParams() {
-        return new MarginLayoutParams(LayoutParams.MATCH_PARENT,LayoutParams.MATCH_PARENT);
-    }
+//    /** 4 布局  */
+//    @Override
+//    public LayoutParams generateLayoutParams(AttributeSet attrs) {
+//        return new MarginLayoutParams(getContext(),attrs);
+//    }
+//
+//    @Override
+//    protected LayoutParams generateLayoutParams(LayoutParams p) {
+//        return new MarginLayoutParams(p);
+//    }
+//
+//    @Override
+//    protected LayoutParams generateDefaultLayoutParams() {
+//        return new MarginLayoutParams(LayoutParams.MATCH_PARENT,LayoutParams.MATCH_PARENT);
+//    }
 
     /**
      * 具体地说，典型的触屏事件及其listener执行的流程见下：
