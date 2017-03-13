@@ -14,20 +14,23 @@ import android.widget.Scroller;
 
 
 public class SlidingViewPager extends LinearLayout implements GestureDetector.OnGestureListener{
-    public static final String TAG="SlidingViewGroup";
-    private GestureDetector gestureDetector ;
+    public static final String TAG="BuffSlidingViewPager";
+    private GestureDetector mGestureDetector ;
     private Scroller mScroller;
     private VelocityTracker velocityTracker;//速率跟踪器
     private ViewConfiguration configuration;//获取系统配置的最小滑动距离和速率
-    private float lastX=0;
+    private float mDownX,mDownY;
     private int offsetX,offsetY;
     private int currentPageIndex=0;
     private int minScrollDistance = 0;
     private int minFlingVelocity = 0;
-    private float dx;
-    private boolean isFirst = true;
+    private float dx,dy;//x方向和y方向的移动的距离，带正负号
     private CustomPagerIndicator indicator;
     private int mWidth,mHeight;
+    private boolean isCanSliding = false;//是否需要滑动
+    private boolean isDraging = false;
+    private int childViewWidth;
+    private State state =State.None;
     public SlidingViewPager(Context context) {
         this(context,null);
     }
@@ -47,8 +50,8 @@ public class SlidingViewPager extends LinearLayout implements GestureDetector.On
     }
     /** 初始化手势监听器等等*/
     private void init(Context context){
-        gestureDetector = new GestureDetector(context,this);
-        gestureDetector.setIsLongpressEnabled(false);
+        mGestureDetector = new GestureDetector(context,this);
+        mGestureDetector.setIsLongpressEnabled(false);
         mScroller = new Scroller(context);
         configuration = ViewConfiguration.get(context);
         minScrollDistance =  configuration.getScaledTouchSlop();
@@ -94,63 +97,6 @@ public class SlidingViewPager extends LinearLayout implements GestureDetector.On
         scrollTo(currentPageIndex*mWidth, 0);
     }
 
-    /**
-     * 简单总结下，一般的写法
-     * 如果w,h都是match_parent,那么直接取上层容器的推荐值
-     * 如果w是match_parent,h是wrap_content,那么w取推荐值，h取一个最大值
-     * 如果w是wrap-content,h是math_parent,那么h取推荐值，w取累加值
-     * @param widthSize
-     * @param heightSize
-     * @param widthMode
-     * @param heightMode
-     */
-    private void measure(int widthSize,int heightSize,int widthMode,int heightMode){
-        /**
-         * EXACTLY：表示设置了精确的值，一般当childView设置其宽、高为精确值、match_parent时，ViewGroup会将其设置为EXACTLY；
-         AT_MOST：表示子布局被限制在一个最大值内，一般当childView设置其宽、高为wrap_content时，ViewGroup会将其设置为AT_MOST；
-         UNSPECIFIED：表示子布局想要多大就多大，一般出现在AadapterView的item的heightMode中、ScrollView的childView的heightMode中；此种模式比较少见。
-         */
-        int width =0;
-        int height = 0;
-        if(getChildCount()==0){
-            setMeasuredDimension(width,height);
-        }
-        if(widthMode==MeasureSpec.EXACTLY&&heightMode==MeasureSpec.EXACTLY){
-            //MATCH_PARENT 设置为上层容器推荐的长 宽
-//           Log.e(TAG,"ViewGroup,w-"+widthSize+",h-"+heightSize);
-            setMeasuredDimension(widthSize,heightSize);
-            return;
-        }
-        if(widthMode==MeasureSpec.AT_MOST&&heightMode==MeasureSpec.AT_MOST){
-            for(int i=0;i<getChildCount();i++){
-                View childView = getChildAt(i);
-                int childWith = childView.getMeasuredWidth();
-                int childHeight = childView.getMeasuredHeight();
-                MarginLayoutParams clp= (MarginLayoutParams)childView.getLayoutParams();
-                width+=childWith+clp.leftMargin+clp.rightMargin;
-                height=Math.max(height,childHeight+clp.topMargin+clp.bottomMargin);
-            }
-        }else if(widthMode==MeasureSpec.AT_MOST){
-            for(int i=0;i<getChildCount();i++){
-                View childView = getChildAt(i);
-                int childWith = childView.getMeasuredWidth();
-                MarginLayoutParams clp= (MarginLayoutParams)childView.getLayoutParams();
-                width+=childWith+clp.leftMargin+clp.rightMargin;
-            }
-            height = heightSize;
-        }else if(heightMode==MeasureSpec.AT_MOST){
-            for(int i=0;i<getChildCount();i++){
-                View childView = getChildAt(i);
-                int childHeight = childView.getMeasuredHeight();
-                MarginLayoutParams clp= (MarginLayoutParams)childView.getLayoutParams();
-                height=Math.max(height,childHeight+clp.topMargin+clp.bottomMargin);
-            }
-            width = widthSize;
-        }
-        setMeasuredDimension(width,height);
-        Log.e(TAG,"Layout: "+width+","+height);
-    }
-
     @Override
     protected void onLayout(boolean changed, int l, int t, int r, int b) {
         super.onLayout( changed, l,  t, r,  b);
@@ -170,105 +116,113 @@ public class SlidingViewPager extends LinearLayout implements GestureDetector.On
     /** 3 事件分发*/
     @Override
     public boolean dispatchTouchEvent(MotionEvent ev) {
-        return super.dispatchTouchEvent(ev);
-    }
-
-    @Override
-    public boolean onInterceptTouchEvent(MotionEvent ev) {
-        obtainVelocityTracker(ev);
-        int action = ev.getAction();
-        float x = ev.getRawX();//拿相对于屏幕的x坐标
-        float ex = ev.getX();
-        float ey = ev.getY();
-        switch (action){
+        float x = ev.getX();
+        float y = ev.getY();
+        View childView = getChildAt(0);
+        childViewWidth = childView.getRight()-childView.getLeft();
+        switch (ev.getAction()) {
             case MotionEvent.ACTION_DOWN:
-/**                手指按下，获取偏移量 更新x坐标*/
-//                Log.e(TAG,"onTouchEvent ACTION_DOWN");
-//                Log.e(TAG,"onTouchEvent ACTION_DOWN getScrollX - "+getScrollX());
+                isCanSliding = true;
                 offsetX=getScrollX();
-                lastX = x;
-                break;
-            case MotionEvent.ACTION_UP:
-//                Log.e(TAG,"onTouchEvent ACTION_UP getScrollX - "+getScrollX());
-                View childView = getChildAt(0);
-                int width = childView.getRight()-childView.getLeft();
-                int scrollX =  getScrollX();
-                int delta = scrollX - offsetX;
-                //计算出一秒移动1000像素的速率 1000 表示每秒多少像素（pix/second),1代表每微秒多少像素（pix/millisecond)
-                velocityTracker.computeCurrentVelocity(1000, configuration.getScaledMaximumFlingVelocity());
-                float velocityX = velocityTracker.getXVelocity();
-                float velocityY = velocityTracker.getYVelocity();
-                //TODO:暂时用子View的三分之一，后续改成屏幕的三分一
-                if(Math.abs(delta)<width/3){
-                    /** 小于三分之一，弹回去 */
-                    Log.e(TAG,"onTouchEvent ACTION_UP back 1  ");
-                    mScroller.startScroll(scrollX, 0, -delta, 0,1000);
-                    invalidate();
-                }else if(Math.abs(velocityX)<=configuration.getScaledMinimumFlingVelocity()&&Math.abs(velocityY)<=configuration.getScaledMinimumFlingVelocity()){
-                    //当速度小于系统速度，但过了三分一的距离，此时应该滑动一页
-                    Log.e(TAG,"onTouchEvent ACTION_UP back 2  ");
-                    if(isFirst){
-                        Log.e(TAG,"onTouchEvent ACTION_UP back 2-0  ");
-                        isFirst=false;
-                        currentPageIndex++;
-                        int dx = width - delta;
-                        mScroller.startScroll(scrollX, 0, dx, 0, 1000);
-                        invalidate();
-                        indicator.addChildViewCenterPointToQueue(currentPageIndex);
-                        indicator.startCircleMoving();
-                        break;
-                    }
-
-                    if(Math.signum(delta)>0){ //左滑趋势
-                        if(currentPageIndex >0) {
-                            currentPageIndex++;
-                            isFirst=false;
-                            Log.e(TAG, "onTouchEvent ACTION_UP back 2-1  ");
-                            int dx = width - delta;
-                            mScroller.startScroll(scrollX, 0, dx, 0, 1000);
-                            invalidate();
-                        }
-                    }else{//右滑趋势
-                        if(currentPageIndex < getChildCount()) {
-                            isFirst=false;
-                            currentPageIndex--;
-                            Log.e(TAG, "onTouchEvent ACTION_UP back 2-2  ");
-                            int dx = width + delta;
-                            mScroller.startScroll(scrollX, 0, -dx, 0, 1000);
-                            invalidate();
-                        }
-                    }
-//                    mScroller.startScroll(scrollX, 0, -delta, 0,1000);
-                    indicator.addChildViewCenterPointToQueue(currentPageIndex);
-                    indicator.startCircleMoving();
-                }
+                mDownX = x;
+                mDownY = y;
                 break;
             case MotionEvent.ACTION_MOVE:
-                /** 拖动的时候*/
-                dx = x-lastX;
-//                Log.e(TAG,"onTouchEvent ACTION_MOVE dx - "+dx+",x - "+x+",lastX - "+lastX+",currentPageIndex--"+currentPageIndex);
-                lastX = x;
-
-                if(currentPageIndex==0&&dx>0 || currentPageIndex==getChildCount()-1&&dx<0){
-                    break;
+            case MotionEvent.ACTION_UP:
+                if (!isCanSliding) {
+                    isCanSliding = isCanSliding(ev);
                 }
-                scrollBy((int)-dx,0);/** 在当前位置的基础上，偏移到(-dx,0)的位置，那么看起来有被拖拽的效果...*/
-                break;
-            case MotionEvent.ACTION_CANCEL://TODO:事件被上层拦截时触发。那么用来注销VelocityTracker？
-                realseVelocityTracker();
-//                scrollTo(getScrollX(),0);
                 break;
             default:
                 break;
         }
-        gestureDetector.onTouchEvent(ev);
+        return super.dispatchTouchEvent(ev);
+    }
 
-        return super.onInterceptTouchEvent(ev);
+    private boolean isCanSliding(MotionEvent ev){
+        float currentX = ev.getX();
+        float currentY = ev.getY();
+        if(getIndicator()!=null&&indicator.isTranslateOrRippleInProgress()){
+            Log.e(TAG,"indicator RUNNING ANTIMATION");
+            return false;
+        }
+        if(mScroller.isFinished()&&Math.abs(currentX-mDownX) > Math.abs(currentY-mDownY) && Math.abs(currentX-mDownX)>minScrollDistance){
+            //X方向的距离大于y的滑动距离 && x方向的滑动距离大于系统最短滑动距离，认为是水平滑动
+            return true;
+        }
+        return false;
     }
 
     @Override
+    public boolean onInterceptTouchEvent(MotionEvent ev) {
+        if(getIndicator()!=null&&indicator.isTranslateOrRippleInProgress()){
+            return true;
+        }
+        return  isCanSliding;
+    }
+
+
+
+    @Override
     public boolean onTouchEvent(MotionEvent event) {
-        return super.onTouchEvent(event)/*gestureDetector.onTouchEvent(event)*/;
+        obtainVelocityTracker(event);
+        float x = event.getX();
+        int action = event.getAction();
+        switch (action){
+            case MotionEvent.ACTION_DOWN:
+                break;
+            case MotionEvent.ACTION_MOVE:
+                dx = x - mDownX;
+                mDownX = x;
+                if (currentPageIndex == 0 && dx > 0 || currentPageIndex == getChildCount() - 1 && dx < 0) {
+                    break;
+                }
+                scrollBy((int) -dx, 0);
+                break;
+            case MotionEvent.ACTION_UP:
+                if(isCanSliding) {
+                    int scrollX = getScrollX();
+                    int delta = scrollX - offsetX;
+                    //计算出一秒移动1000像素的速率 1000 表示每秒多少像素（pix/second),1代表每微秒多少像素（pix/millisecond)
+                    velocityTracker.computeCurrentVelocity(1000, configuration.getScaledMaximumFlingVelocity());
+                    float velocityX = velocityTracker.getXVelocity();
+                    float velocityY = velocityTracker.getYVelocity();
+                    if (Math.abs(delta) < childViewWidth / 3) {
+                        // 小于三分之一，弹回去
+                        Log.e(TAG, "onTouchEvent ACTION_UP back 1  ");
+                        state = State.None;
+                        requestUpdateState(state,delta);
+                    } else if (Math.abs(velocityX) <= configuration.getScaledMinimumFlingVelocity() && Math.abs(velocityY) <= configuration.getScaledMinimumFlingVelocity()) {
+                        //当速度小于系统速度，但过了三分一的距离，此时应该滑动一页
+                        Log.e(TAG, "onTouchEvent ACTION_UP back 2  ");
+                        if (delta > 0) { //左滑趋势
+                            Log.e(TAG,"onTouchEvent page index 2-1 -- "+currentPageIndex);
+                            if (currentPageIndex >=0 ) {
+                                Log.e(TAG, "onTouchEvent ACTION_UP back 2-1  ");
+                                state = State.ToNext;
+                            }
+                        } else {//右滑趋势
+                            Log.e(TAG,"onTouchEvent page index 2-2 -- "+currentPageIndex);
+                            if (currentPageIndex < getChildCount()) {
+                                Log.e(TAG, "onTouchEvent ACTION_UP back 2-2  ");
+                                state = State.ToPre;
+                            }
+                        }
+                        Log.e(TAG,"requestUpdateState 1 "+state);
+                        requestUpdateState(state,delta);
+                        Log.e(TAG,"requestUpdateState 1 addChildViewCenterPointToIndicator "+currentPageIndex);
+                        addChildViewCenterPointToIndicator(currentPageIndex);
+                        startIndicatorCircleMoving();
+                    }
+
+                }
+                realseVelocityTracker();
+                break;
+            default:
+                break;
+
+        }
+        return mGestureDetector.onTouchEvent(event) ;
     }
 
     /**
@@ -281,58 +235,23 @@ public class SlidingViewPager extends LinearLayout implements GestureDetector.On
         velocityTracker.addMovement(event);
     }
 
+    /**
+     * 释放速度跟踪器
+     */
     private void realseVelocityTracker(){
         if(velocityTracker!=null){
             velocityTracker.recycle();
+            velocityTracker = null;
         }
     }
-//    /** 4 布局  */
-//    @Override
-//    public LayoutParams generateLayoutParams(AttributeSet attrs) {
-//        return new MarginLayoutParams(getContext(),attrs);
-//    }
-//
-//    @Override
-//    protected LayoutParams generateLayoutParams(LayoutParams p) {
-//        return new MarginLayoutParams(p);
-//    }
-//
-//    @Override
-//    protected LayoutParams generateDefaultLayoutParams() {
-//        return new MarginLayoutParams(LayoutParams.MATCH_PARENT,LayoutParams.MATCH_PARENT);
-//    }
-
-    /**
-     * 具体地说，典型的触屏事件及其listener执行的流程见下：
-
-     1). 单击事件的执行流程：
-     有两种情况，一种是时间很短，一种时间稍长。
-     时间很短：onDown ----> onSingleTapUp ----> onSingleTapConfirmed
-     时间稍长：onDown ----> onShowPress   ----> onSingleTapUp ----> onSingleTapConfirmed
-
-     2). 长按事件
-     onDown ----> onShowPress ----> onLongPress
-     3.抛(fling)：手指触动屏幕后，稍微滑动后立即松开:
-     onDown ----> onScroll ----> onScroll ----> onScroll ----> ………  ----> onFling
-     4.拖动(drag)
-     onDown ----> onScroll ----> onScroll ----> onFiling
-     TODO:--注意：有的时候会触发onFiling，但是有的时候不会触发，这是因为人的动作不标准所致。
-     GestureDetector的源码里面，当if ((Math.abs(velocityY) > mMinimumFlingVelocity)
-     || (Math.abs(velocityX) > mMinimumFlingVelocity)){
-     handled = mListener.onFling(mCurrentDownEvent, ev, velocityX, velocityY);
-     }
-     速度太慢导致无法触发onFling
-     */
 
     @Override
     public boolean onDown(MotionEvent e) {
-        Log.e(TAG,"onDown");
         return true;
     }
 
     @Override
     public void onShowPress(MotionEvent e) {
-//        Log.e(TAG,"onShowPress");
     }
 
     @Override
@@ -340,7 +259,6 @@ public class SlidingViewPager extends LinearLayout implements GestureDetector.On
 //        Log.e(TAG,"onSingleTapUp");
         return false;
     }
-    /** 注意：要在onDown()返回true才可以触发onScroll，滑动的时候会多次调用，于是在onFling中搞事情*/
     @Override
     public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY) {
         return false;
@@ -361,36 +279,33 @@ public class SlidingViewPager extends LinearLayout implements GestureDetector.On
         if(Math.abs(delta)<width/3){
             //弹回
             Log.e(TAG,"onFling donothing");
-            mScroller.startScroll(getScrollX(), 0, -delta, 0,1000);
-            invalidate();
+            state = State.None;
+            Log.e(TAG,"requestUpdateState 2 "+state);
+            requestUpdateState(state,delta);
             return true;
         }
         if(Math.abs(distanceX)>=minScrollDistance) {
-            Log.e(TAG,"before--"+currentPageIndex);
             if(distanceX == 0){
                 Log.e(TAG,"onFling donothing distanceX =0");
                 return true;
             }
-            indicator.addChildViewCenterPointToQueue(currentPageIndex);
             if (distanceX < 0) {
                 if (currentPageIndex < getChildCount() - 1) {
-                    isFirst=false;
-//                    smoothScrollBy((currentPageIndex + 1) * width, 0);
-                    scrollByVelocity((currentPageIndex + 1) * width, 0,velocityX,velocityY);
-                    currentPageIndex++;
+                    state = State.ToNext;
+                    Log.e(TAG,"requestUpdateState 3 "+state);
+                    requestUpdateState(state,delta);
                 }
             }
             if (distanceX > 0) {
                 if (currentPageIndex > 0) {
-                    isFirst=false;
-//                    smoothScrollBy((currentPageIndex - 1) * width, 0);
-                    scrollByVelocity((currentPageIndex - 1) * width, 0,velocityX,velocityY);
-                    currentPageIndex--;
+                    state = State.ToPre;
+                    Log.e(TAG,"requestUpdateState 4 "+state);
+                    requestUpdateState(state,delta);
                 }
             }
-            indicator.addChildViewCenterPointToQueue(currentPageIndex);
-            indicator.startCircleMoving();
-            Log.e(TAG,"after--"+currentPageIndex);
+            Log.e(TAG,"onFling addChildViewCenterPointToIndicator "+currentPageIndex);
+            addChildViewCenterPointToIndicator(currentPageIndex);
+            startIndicatorCircleMoving();
         }
 
         return true;
@@ -398,7 +313,6 @@ public class SlidingViewPager extends LinearLayout implements GestureDetector.On
 
     @Override
     public void computeScroll() {
-//        super.computeScroll();
         if(mScroller.computeScrollOffset()){
             scrollTo(mScroller.getCurrX(),mScroller.getCurrY());
             postInvalidate();
@@ -432,28 +346,67 @@ public class SlidingViewPager extends LinearLayout implements GestureDetector.On
         invalidate();//这里必须调用invalidate()才能保证computeScroll()会被调用，否则不一定会刷新界面，看不到滚动效果
     }
 
+
+    private void requestUpdateState(State state,int delta){
+        Log.e(TAG,"page index -"+currentPageIndex);
+        switch (state){
+            case None:
+                stayInCurrentPage();
+                Log.e(TAG,"stayInCurrentPage - "+currentPageIndex);
+                break;
+            case ToNext:
+                moveToNextPage(delta);
+                Log.e(TAG,"moveToNextPage - "+currentPageIndex);
+                break;
+            case ToPre:
+                moveToPrePage(delta);
+                Log.e(TAG,"moveToPrePage - "+currentPageIndex);
+                break;
+            default:
+                break;
+        }
+        invalidate();
+    }
+
+
+
     /**
      * 下一页，向左
      */
-    private void moveToNextPage(){
-        View childView = getChildAt(0);
-        int width = childView.getRight()-childView.getLeft();
+    private void moveToNextPage(int delta){
+        int dx = childViewWidth - delta;
         int scrollX =  getScrollX();
         currentPageIndex++;
-        mScroller.startScroll(scrollX, 0, width, 0, 1000);
-        invalidate();
+        mScroller.startScroll(scrollX, 0, dx, 0, 1000);
     }
 
     /**
      * 上一页，向右
      */
-    private void moveToPrePage(){
-        View childView = getChildAt(0);
-        int width = childView.getRight()-childView.getLeft();
+    private void moveToPrePage(int delta){
+        int dx = childViewWidth+delta;
         int scrollX =  getScrollX();
         currentPageIndex--;
-        mScroller.startScroll(scrollX, 0, -width, 0, 1000);
-        invalidate();
+        mScroller.startScroll(scrollX, 0, -dx, 0, 1000);
+    }
+
+    private void stayInCurrentPage(){
+        int scrollX = getScrollX();
+        int detla = currentPageIndex*childViewWidth - scrollX ;
+        mScroller.startScroll(scrollX,0,detla,0);
+    }
+
+    private void addChildViewCenterPointToIndicator(int currentPageIndex){
+        if(getIndicator()==null){
+            return;
+        }
+        indicator.addChildViewCenterPointToQueue(currentPageIndex);
+    }
+    private void startIndicatorCircleMoving(){
+        if(getIndicator()==null){
+            return;
+        }
+        indicator.startCircleMoving();
     }
 
     /**
@@ -494,5 +447,8 @@ public class SlidingViewPager extends LinearLayout implements GestureDetector.On
             }
         }
         return index;
+    }
+    public  enum State {
+        ToPre,ToNext,None;
     }
 }
