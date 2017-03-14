@@ -117,7 +117,9 @@ public class CustomPagerIndicator extends/* ViewGroup*/LinearLayout {
                 case 0:
                     // 移除所有的msg.what为0等消息，保证只有一个循环消息队列再跑
                     handler.removeMessages(0);
-                    if (translateState != STATE_START && pointLimitQueue.size() > 1) {
+                    Log.i(TAG,"定时器开始 " + translateState );
+                    if (translateState != STATE_START  &&translateState != STATE_MOVING && pointLimitQueue.size() > 1) {
+                        Log.i(TAG,"startTranslateAnimation");
                         startTranslateAnimation();
                     }
                     // 再次发出msg，循环更新
@@ -126,6 +128,7 @@ public class CustomPagerIndicator extends/* ViewGroup*/LinearLayout {
 
                 case 1:
                     // 直接移除，定时器停止
+                    Log.i(TAG,"定时器停止" + translateState);
                     handler.removeMessages(0);
                     break;
                 case 3:
@@ -714,7 +717,7 @@ public class CustomPagerIndicator extends/* ViewGroup*/LinearLayout {
             return;
         } else if (pointLimitQueue.size() == 1) {
             /** 队列中只有一个点 */
-            Log.i(TAG, "dispatchDraw 1");
+//            Log.i(TAG, "dispatchDraw 1");
             PointF p = pointLimitQueue.getFirst();
             initCenterPoint(p.x, p.y);
             dataPoint = initDataPoint(0, 0, p.x, p.y, 0);
@@ -724,7 +727,7 @@ public class CustomPagerIndicator extends/* ViewGroup*/LinearLayout {
             ripple(p, canvas);
         } else if (pointLimitQueue.size() == 2) {
             /** 队列有2个点则重置点的数据，并执行动画重绘界面*/
-            Log.i(TAG, " dispatchDraw 2  pointLimitQueue-" + pointLimitQueue.queue.toString()+",mInterpolatedTime-"+mInterpolatedTime);
+//            Log.i(TAG, " dispatchDraw 2  pointLimitQueue-" + pointLimitQueue.queue.toString()+",mInterpolatedTime-"+mInterpolatedTime);
             /**麻烦事情 开始吧*/
             PointF pFirst = pointLimitQueue.get(0);
             PointF pLast = pointLimitQueue.get(1);
@@ -767,7 +770,7 @@ public class CustomPagerIndicator extends/* ViewGroup*/LinearLayout {
     @Override
     public void invalidate() {
         super.invalidate();
-        handler.sendEmptyMessage(1);
+//        handler.sendEmptyMessage(1);
     }
 
     /**
@@ -829,19 +832,6 @@ public class CustomPagerIndicator extends/* ViewGroup*/LinearLayout {
      */
     @Override
     public boolean onTouchEvent(MotionEvent event) {
-        Log.e(TAG, "onTouchEvent");// TODO: 2017/2/6 当 onInterceptTouchEvent返回true，这里怎么没有被触发？
-        int a = event.getAction();
-        switch (a) {
-            case MotionEvent.ACTION_DOWN:
-                Log.e(TAG, "onTouchEvent ACTION_DOWN");
-                break;
-            case MotionEvent.ACTION_MOVE:
-//                Log.e(TAG,"onTouchEvent ACTION_MOVE");
-                break;
-            case MotionEvent.ACTION_UP:
-//                Log.e(TAG,"onTouchEvent ACTION_UP");
-                break;
-        }
         return super.onTouchEvent(event);
     }
 
@@ -924,7 +914,7 @@ public class CustomPagerIndicator extends/* ViewGroup*/LinearLayout {
      * @return
      */
     public PointF addChildViewCenterPointToQueue(int index) {
-//        Log.i(TAG,"ps 1-"+pointLimitQueue.queue.toString());
+        Log.i(TAG,"addChildViewCenterPointToQueue ps 1-"+pointLimitQueue.queue.toString()+" "+index);
         View childView = getChildAt(index);
         int top = childView.getTop();
         int bottom = childView.getBottom();
@@ -934,7 +924,7 @@ public class CustomPagerIndicator extends/* ViewGroup*/LinearLayout {
         p.x = left + (right - left) / 2f;
         p.y = top + (bottom - top) / 2f;
         pointLimitQueue.offer(p);
-//        Log.i(TAG,"ps 2-"+pointLimitQueue.queue.toString());
+        Log.i(TAG,"addChildViewCenterPointToQueue ps 2-"+pointLimitQueue.queue.toString());
         return p;
     }
 
@@ -1047,7 +1037,7 @@ public class CustomPagerIndicator extends/* ViewGroup*/LinearLayout {
         protected void applyTransformation(float interpolatedTime, Transformation t) {
             super.applyTransformation(interpolatedTime, t);
             /** mInterpolatedTime [0,1],可以看成是动画执行时间，全程为1，从0开始*/
-//            Log.e(TAG,"interpolatedTime "+interpolatedTime);
+            Log.e(TAG,"TranslateAnimation interpolatedTime "+interpolatedTime);
             mInterpolatedTime = interpolatedTime;
             if (mInterpolatedTime > 0) {
                 translateState = STATE_START;
@@ -1064,7 +1054,9 @@ public class CustomPagerIndicator extends/* ViewGroup*/LinearLayout {
             }
             if (mInterpolatedTime == 1 && pointLimitQueue.size() >= 2) {
                 //执行完成之后，并且队列中有2个，出队一个，表明一次平移执行完成之后，队列中只能存在一个点
+                Log.e(TAG,"TranslateAnimation poll() before -- " +pointLimitQueue.queue.toString());
                 pointLimitQueue.poll();
+                Log.e(TAG,"TranslateAnimation poll() after -- " +pointLimitQueue.queue.toString());
             }
         }
 
@@ -1074,6 +1066,7 @@ public class CustomPagerIndicator extends/* ViewGroup*/LinearLayout {
      * 开始弹性平移动画
      */
     public void startTranslateAnimation() {
+        Log.i(TAG,"before startTranslateAnimation -- "+mInterpolatedTime);
         mInterpolatedTime = 0;
         move.setDuration(1000);
         move.setAnimationListener(new TranslateAnimatonListener());

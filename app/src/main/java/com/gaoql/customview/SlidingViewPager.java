@@ -142,11 +142,7 @@ public class SlidingViewPager extends LinearLayout implements GestureDetector.On
     private boolean isCanSliding(MotionEvent ev){
         float currentX = ev.getX();
         float currentY = ev.getY();
-        if(getIndicator()!=null&&indicator.isTranslateOrRippleInProgress()){
-            Log.e(TAG,"indicator RUNNING ANTIMATION");
-            return false;
-        }
-        if(mScroller.isFinished()&&Math.abs(currentX-mDownX) > Math.abs(currentY-mDownY) && Math.abs(currentX-mDownX)>minScrollDistance){
+        if(Math.abs(currentX-mDownX) > Math.abs(currentY-mDownY) && Math.abs(currentX-mDownX)>minScrollDistance){
             //X方向的距离大于y的滑动距离 && x方向的滑动距离大于系统最短滑动距离，认为是水平滑动
             return true;
         }
@@ -155,9 +151,6 @@ public class SlidingViewPager extends LinearLayout implements GestureDetector.On
 
     @Override
     public boolean onInterceptTouchEvent(MotionEvent ev) {
-        if(getIndicator()!=null&&indicator.isTranslateOrRippleInProgress()){
-            return true;
-        }
         return  isCanSliding;
     }
 
@@ -212,6 +205,7 @@ public class SlidingViewPager extends LinearLayout implements GestureDetector.On
                         requestUpdateState(state,delta);
                         Log.e(TAG,"requestUpdateState 1 addChildViewCenterPointToIndicator "+currentPageIndex);
                         addChildViewCenterPointToIndicator(currentPageIndex);
+                        Log.i(TAG,"startIndicatorCircleMoving 1");
                         startIndicatorCircleMoving();
                     }
 
@@ -305,6 +299,7 @@ public class SlidingViewPager extends LinearLayout implements GestureDetector.On
             }
             Log.e(TAG,"onFling addChildViewCenterPointToIndicator "+currentPageIndex);
             addChildViewCenterPointToIndicator(currentPageIndex);
+            Log.i(TAG,"startIndicatorCircleMoving 2");
             startIndicatorCircleMoving();
         }
 
