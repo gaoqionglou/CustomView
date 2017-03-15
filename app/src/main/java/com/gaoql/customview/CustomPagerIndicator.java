@@ -1,27 +1,29 @@
 package com.gaoql.customview;
 
-import android.content.Context;
-import android.graphics.Canvas;
-import android.graphics.Color;
-import android.graphics.Paint;
-import android.graphics.Path;
-import android.graphics.PointF;
-import android.os.Handler;
-import android.os.Message;
-import android.util.AttributeSet;
-import android.util.Log;
-import android.view.MotionEvent;
-import android.view.View;
-import android.view.animation.AccelerateDecelerateInterpolator;
-import android.view.animation.Animation;
-import android.view.animation.Transformation;
-import android.widget.LinearLayout;
+        import android.animation.ValueAnimator;
+        import android.content.Context;
+        import android.graphics.Canvas;
+        import android.graphics.Color;
+        import android.graphics.Paint;
+        import android.graphics.Path;
+        import android.graphics.PointF;
+        import android.os.Handler;
+        import android.os.Message;
+        import android.util.AttributeSet;
+        import android.util.Log;
+        import android.view.MotionEvent;
+        import android.view.View;
+        import android.view.animation.AccelerateDecelerateInterpolator;
+        import android.view.animation.Animation;
+        import android.view.animation.LinearInterpolator;
+        import android.view.animation.Transformation;
+        import android.widget.LinearLayout;
 
-import com.gaoql.R;
+        import com.gaoql.R;
 
-import java.util.Arrays;
-import java.util.LinkedList;
-import java.util.List;
+        import java.util.Arrays;
+        import java.util.LinkedList;
+        import java.util.List;
 
 /**
  * @author gql
@@ -116,14 +118,14 @@ public class CustomPagerIndicator extends/* ViewGroup*/LinearLayout {
             switch (msg.what) {
                 case 0:
                     // 移除所有的msg.what为0等消息，保证只有一个循环消息队列再跑
-                    handler.removeMessages(0);
+//                    handler.removeMessages(0);
                     Log.i(TAG,"定时器开始 " + translateState );
-                    if (translateState != STATE_START  &&translateState != STATE_MOVING && pointLimitQueue.size() > 1) {
-                        Log.i(TAG,"startTranslateAnimation");
-                        startTranslateAnimation();
+                    if (translateState != STATE_START  &&translateState != STATE_MOVING  && pointLimitQueue.size() > 1) {
+                        Log.i(TAG,"startTranslateAnimatior");
+                        startTranslateAnimatior();
                     }
                     // 再次发出msg，循环更新
-                    handler.sendEmptyMessageDelayed(0, 1000);
+//                    handler.sendEmptyMessageDelayed(0, 1000);
                     break;
 
                 case 1:
@@ -133,7 +135,7 @@ public class CustomPagerIndicator extends/* ViewGroup*/LinearLayout {
                     break;
                 case 3:
                     //开始描边波浪动画
-                    startRippleScaleAnimation();
+                    startRippleAnimatior();
                     break;
 
                 default:
@@ -717,7 +719,7 @@ public class CustomPagerIndicator extends/* ViewGroup*/LinearLayout {
             return;
         } else if (pointLimitQueue.size() == 1) {
             /** 队列中只有一个点 */
-//            Log.i(TAG, "dispatchDraw 1");
+            Log.i(TAG, "dispatchDraw 1"+pointLimitQueue.queue.toString());
             PointF p = pointLimitQueue.getFirst();
             initCenterPoint(p.x, p.y);
             dataPoint = initDataPoint(0, 0, p.x, p.y, 0);
@@ -770,7 +772,6 @@ public class CustomPagerIndicator extends/* ViewGroup*/LinearLayout {
     @Override
     public void invalidate() {
         super.invalidate();
-//        handler.sendEmptyMessage(1);
     }
 
     /**
@@ -818,10 +819,6 @@ public class CustomPagerIndicator extends/* ViewGroup*/LinearLayout {
 //                Log.e(TAG,"dispatchTouchEvent ACTION_UP");
                 break;
         }
-/*        if(isTranslateOrRippleInProgress()){
-            Log.e(TAG,"动画进行中");
-            return true;
-        }*/
         return super.dispatchTouchEvent(ev);
     }
 
@@ -846,7 +843,7 @@ public class CustomPagerIndicator extends/* ViewGroup*/LinearLayout {
         if(isTranslateOrRippleInProgress()
                 &&pointLimitQueue.getLast().equals(getChildViewCenterPointToQueue(getAttachView().getCurrentPageIndex()))){
             /** 当且仅当 动画进行中以及当前滑动的终点页面的下标所对应的PointF是点队列中的最后一个时候,不分发事件到子View，拦截掉，传递事件到自己的OnTouchEvent*/
-                    return true;
+            return true;
         }
         return super.onInterceptTouchEvent(ev);
     }
@@ -914,6 +911,10 @@ public class CustomPagerIndicator extends/* ViewGroup*/LinearLayout {
      * @return
      */
     public PointF addChildViewCenterPointToQueue(int index) {
+        if(translateState==STATE_MOVING){
+            Log.e(TAG,"动画进行中不能入队");
+            return null;
+        }
         Log.i(TAG,"addChildViewCenterPointToQueue ps 1-"+pointLimitQueue.queue.toString()+" "+index);
         View childView = getChildAt(index);
         int top = childView.getTop();
@@ -1063,6 +1064,43 @@ public class CustomPagerIndicator extends/* ViewGroup*/LinearLayout {
     }
 
     /**
+     *
+     */
+    private void startTranslateAnimatior(){
+        if(translateState != STATE_STOP&&translateState!=STATE_UNSTART){
+            //这里出现了一种动画被打断的情况，需要在外部出队
+            Log.e(TAG,"startTranslateAnimatior translateState "+translateState);
+            Log.e(TAG,"startTranslateAnimatior poll() before -- " +pointLimitQueue.queue.toString());
+            pointLimitQueue.poll();
+            Log.e(TAG,"startTranslateAnimatior poll() after -- " +pointLimitQueue.queue.toString());
+        }
+        translateState = STATE_START;
+        ValueAnimator translateAnimator = ValueAnimator.ofFloat(0f,1f);
+        translateAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+            @Override
+            public void onAnimationUpdate(ValueAnimator animation) {
+                mInterpolatedTime = (float)animation.getAnimatedValue();
+                Log.e(TAG,"startTranslateAnimatior interpolatedTime "+mInterpolatedTime);
+                if(mInterpolatedTime!=1){
+                    translateState = STATE_MOVING;
+                    invalidate();
+                }else{
+                    Log.e(TAG,"TranslateAnimation poll() before -- " +pointLimitQueue.queue.toString());
+                    pointLimitQueue.poll();
+                    Log.e(TAG,"TranslateAnimation poll() after -- " +pointLimitQueue.queue.toString());
+                    translateState = STATE_STOP;
+                    handler.sendEmptyMessage(3);//开启描边波浪效果
+                }
+
+            }
+        });
+        translateAnimator.setDuration(1000);
+        translateAnimator.setInterpolator(new LinearInterpolator());
+        translateAnimator.start();
+
+    }
+
+    /**
      * 开始弹性平移动画
      */
     public void startTranslateAnimation() {
@@ -1103,6 +1141,28 @@ public class CustomPagerIndicator extends/* ViewGroup*/LinearLayout {
             }
             invalidate();
         }
+    }
+
+    private void startRippleAnimatior(){
+        rippleState = STATE_START;
+        ValueAnimator rippleAnimator = ValueAnimator.ofFloat(0f,1f);
+        rippleAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+            @Override
+            public void onAnimationUpdate(ValueAnimator animation) {
+                rippleInterpolatedTime = (float)animation.getAnimatedValue();
+//                Log.e(TAG,"startRippleAnimatior interpolatedTime "+mInterpolatedTime);
+                if(mInterpolatedTime!=1){
+                    rippleState = STATE_MOVING;
+                }else{
+                    rippleState = STATE_STOP;
+                }
+                invalidate();
+
+            }
+        });
+        rippleAnimator.setDuration(500);
+        rippleAnimator.setInterpolator(new LinearInterpolator());
+        rippleAnimator.start();
     }
 
     /**
