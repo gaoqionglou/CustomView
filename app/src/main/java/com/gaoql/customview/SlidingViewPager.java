@@ -1,7 +1,9 @@
 package com.gaoql.customview;
 
 import android.content.Context;
+import android.graphics.Camera;
 import android.graphics.Canvas;
+import android.graphics.Matrix;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.GestureDetector;
@@ -17,6 +19,9 @@ public class SlidingViewPager extends LinearLayout implements GestureDetector.On
     public static final String TAG="BuffSlidingViewPager";
     private GestureDetector mGestureDetector ;
     private Scroller mScroller;
+    private Matrix mMatrix;
+    private Camera mCamera;
+    private Context mContext;
     private VelocityTracker velocityTracker;//速率跟踪器
     private ViewConfiguration configuration;//获取系统配置的最小滑动距离和速率
     private float mDownX,mDownY;
@@ -50,6 +55,9 @@ public class SlidingViewPager extends LinearLayout implements GestureDetector.On
     }
     /** 初始化手势监听器等等*/
     private void init(Context context){
+        this.mContext = context;
+        mCamera = new Camera();
+        mMatrix = new Matrix();
         mGestureDetector = new GestureDetector(context,this);
         mGestureDetector.setIsLongpressEnabled(false);
         mScroller = new Scroller(context);
@@ -110,9 +118,45 @@ public class SlidingViewPager extends LinearLayout implements GestureDetector.On
 
     @Override
     protected void dispatchDraw(Canvas canvas) {
-        super.dispatchDraw(canvas);
+//        super.dispatchDraw(canvas);
+        for (int i = 0; i < getChildCount(); i++) {
+            drawChildWith3D(canvas, i, getDrawingTime());
+        }
     }
+    private void drawChildWith3D(Canvas canvas, int i,long drawingTime){
+        int curScreenX = mWidth * i;
+        //屏幕中不显示的部分不进行绘制
+        if (getScrollX() + mWidth < curScreenX) {
+            return;
+        }
+        if (curScreenX < getScrollX() - mWidth) {
+            return;
+        }
+        float centerX = (getScrollX() > curScreenX) ? curScreenX + mHeight : curScreenX;
+        float centerY = mHeight / 2;
+        float degree = -90f * (getScrollX() - curScreenX) / mWidth;
+        if (degree > 90 || degree < -90) {
+            return;
+        }
+        canvas.save();
 
+        mCamera.save();
+        mCamera.rotateY(degree);
+        mCamera.getMatrix(mMatrix);
+        float scale = mContext.getResources().getDisplayMetrics().density;
+        float[] mValues = new float[9];
+        mMatrix.getValues(mValues);			    //获取数值
+        mValues[6] = mValues[6]/scale;			//数值修正
+        mValues[7] = mValues[7]/scale;			//数值修正
+        mMatrix.setValues(mValues);
+        mCamera.restore();
+
+        mMatrix.preTranslate(-centerX, -centerY);
+        mMatrix.postTranslate(centerX, centerY);
+        canvas.concat(mMatrix);
+        drawChild(canvas, getChildAt(i), drawingTime);
+        canvas.restore();
+    }
     /** 3 事件分发*/
     @Override
     public boolean dispatchTouchEvent(MotionEvent ev) {
@@ -151,6 +195,10 @@ public class SlidingViewPager extends LinearLayout implements GestureDetector.On
 
     @Override
     public boolean onInterceptTouchEvent(MotionEvent ev) {
+        if(getIndicator()!=null&&getIndicator().getTranslateState()==CustomPagerIndicator.STATE_MOVING){
+            //发现正在滑动的,调用父类的方法分发掉该事件
+            return true;
+        }
         return  isCanSliding;
     }
 
