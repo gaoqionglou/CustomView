@@ -196,8 +196,9 @@ public class SlidingViewPager extends LinearLayout implements GestureDetector.On
     @Override
     public boolean onInterceptTouchEvent(MotionEvent ev) {
         if(getIndicator()!=null&&getIndicator().getTranslateState()==CustomPagerIndicator.STATE_MOVING){
-            //发现正在滑动的,调用父类的方法分发掉该事件
-            return true;
+            //发现正在滑动的,调用父类的方法分发掉该事件,不再拦截
+//            Log.e(TAG,"发现正在滑动的,调用父类的方法分发掉该事件,不再拦截");
+            return false;
         }
         return  isCanSliding;
     }

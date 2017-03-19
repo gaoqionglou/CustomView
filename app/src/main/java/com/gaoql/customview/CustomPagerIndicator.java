@@ -117,20 +117,16 @@ public class CustomPagerIndicator extends/* ViewGroup*/LinearLayout {
             super.handleMessage(msg);
             switch (msg.what) {
                 case 0:
-                    // 移除所有的msg.what为0等消息，保证只有一个循环消息队列再跑
-//                    handler.removeMessages(0);
-                    Log.i(TAG,"定时器开始 " + translateState );
+                    Log.i(TAG,"Handler开始 " + translateState );
                     if (translateState != STATE_START  &&translateState != STATE_MOVING  && pointLimitQueue.size() > 1) {
-                        Log.i(TAG,"startTranslateAnimatior");
-                        startTranslateAnimatior();
+                        Log.i(TAG,"startCircleMovingAnimatior");
+                        startCircleMovingAnimatior();
                     }
-                    // 再次发出msg，循环更新
-//                    handler.sendEmptyMessageDelayed(0, 1000);
                     break;
 
                 case 1:
                     // 直接移除，定时器停止
-                    Log.i(TAG,"定时器停止" + translateState);
+                    Log.i(TAG,"Handler Remove " + translateState);
                     handler.removeMessages(0);
                     break;
                 case 3:
@@ -180,7 +176,7 @@ public class CustomPagerIndicator extends/* ViewGroup*/LinearLayout {
      */
     public boolean isTranslateOrRippleInProgress(){
         return getTranslateState() == STATE_MOVING || getRippleState() == STATE_MOVING;
-    }
+}
 
 
     /**
@@ -726,13 +722,13 @@ public class CustomPagerIndicator extends/* ViewGroup*/LinearLayout {
             initCtrlPoint(dataPoint);
             drawCubicBezier(canvas);
             /** 此时队列中只有一个点，则描绘边界*/
-            ripple(p, canvas);
         } else if (pointLimitQueue.size() == 2) {
             /** 队列有2个点则重置点的数据，并执行动画重绘界面*/
 //            Log.i(TAG, " dispatchDraw 2  pointLimitQueue-" + pointLimitQueue.queue.toString()+",mInterpolatedTime-"+mInterpolatedTime);
             /**麻烦事情 开始吧*/
             PointF pFirst = pointLimitQueue.get(0);
             PointF pLast = pointLimitQueue.get(1);
+            ripple(pLast, canvas);
             float xFirst = pFirst.x;
             float yFirst = pFirst.y;
             float xLast = pLast.x;
@@ -1064,33 +1060,26 @@ public class CustomPagerIndicator extends/* ViewGroup*/LinearLayout {
     }
 
     /**
-     *
+     * 改用属性动画，同时进行圆形平移和环涟漪
      */
-    private void startTranslateAnimatior(){
-        if(translateState != STATE_STOP&&translateState!=STATE_UNSTART){
-            //这里出现了一种动画被打断的情况，需要在外部出队
-            Log.e(TAG,"startTranslateAnimatior translateState "+translateState);
-            Log.e(TAG,"startTranslateAnimatior poll() before -- " +pointLimitQueue.queue.toString());
-            pointLimitQueue.poll();
-            Log.e(TAG,"startTranslateAnimatior poll() after -- " +pointLimitQueue.queue.toString());
-        }
-        translateState = STATE_START;
+    private void startCircleMovingAnimatior(){
+        translateState =  rippleState= STATE_START;
         ValueAnimator translateAnimator = ValueAnimator.ofFloat(0f,1f);
         translateAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
             @Override
             public void onAnimationUpdate(ValueAnimator animation) {
                 mInterpolatedTime = (float)animation.getAnimatedValue();
+                rippleInterpolatedTime = (float)animation.getAnimatedValue();
                 Log.e(TAG,"startTranslateAnimatior interpolatedTime "+mInterpolatedTime);
                 if(mInterpolatedTime!=1){
-                    translateState = STATE_MOVING;
-                    invalidate();
+                    translateState = rippleState = STATE_MOVING;
                 }else{
                     Log.e(TAG,"TranslateAnimation poll() before -- " +pointLimitQueue.queue.toString());
                     pointLimitQueue.poll();
                     Log.e(TAG,"TranslateAnimation poll() after -- " +pointLimitQueue.queue.toString());
-                    translateState = STATE_STOP;
-                    handler.sendEmptyMessage(3);//开启描边波浪效果
+                    translateState = rippleState = STATE_STOP;
                 }
+                invalidate();
 
             }
         });
