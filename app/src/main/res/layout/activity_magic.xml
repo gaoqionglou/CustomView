@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:radianViewPager="http://schemas.android.com/apk/res-auto"
+    xmlns:circleRadianButton="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fitsSystemWindows="true"
+    tools:context="com.gaoql.MagicActivity">
+
+    <com.gaoql.customview.RadianViewPager
+        android:layout_width="match_parent"
+        android:layout_height="100dp"
+        android:background="#969696"
+        radianViewPager:itemRadianColor="@color/colorPrimary"
+        radianViewPager:itemRadianTop="60dp"
+        radianViewPager:itemRadianWidth="5sp"
+        radianViewPager:radianTop="25dp"
+        radianViewPager:settledCircleCount="2"
+        radianViewPager:settledCircleRadius="10dp"
+        radianViewPager:settledCircleColor="@color/colorAccent"
+        >
+
+        <com.gaoql.customview.CircleRadianButton
+            android:id="@+id/btn1"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            circleRadianButton:crbackground="@color/colorPrimary" />
+
+
+    </com.gaoql.customview.RadianViewPager>
+
+</RelativeLayout>
