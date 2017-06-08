@@ -310,13 +310,6 @@ public class RadianViewPager extends ViewGroup {
     @Override
     protected void dispatchDraw(Canvas canvas) {
         super.dispatchDraw(canvas);
-        if(currentPrecent>0){
-            Log.i(TAG,"123");
-        }
-        Log.i(TAG,"currentPrecent "+currentPrecent );
-        Log.i(TAG,"currentIndex "+currentIndex );
-        CircleRadianButton circleRadianButton = (CircleRadianButton)getChildAt(0);
-        ArrayList<PointF> pointFs = new ArrayList<>();
         rectF.left = 0;
         rectF.top = mHeight - mItemRadianTop;
         rectF.right = mWidth;
