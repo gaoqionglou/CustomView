@@ -332,9 +332,7 @@ public class RadianViewPager extends ViewGroup {
         PointF pointF1 = new PointF();
         pointF1.x =pos[0];
         pointF1.y =pos[1];
-        mCommonPaint.setColor(Color.BLACK);
-        canvas.drawCircle(pointF1.x,pointF1.y,10,mCommonPaint);
-        Log.i(TAG,"-P1-"+pointF1.toString());
+
         rectF.left = 0;
         rectF.top = mHeight - mRadianTop;
         rectF.right = mWidth;
@@ -354,27 +352,24 @@ public class RadianViewPager extends ViewGroup {
         PointF pointF3 = new PointF();
         pointF3.x = pos[0];
         pointF3.y=pos[1];
-        mLinePath.moveTo(pointF4.x,pointF4.y);
-        mLinePath.lineTo(pointF1.x,pointF1.y);
-        canvas.drawPath(mLinePath,mCommonPaint);
-        mBottomPathMeasure.setPath(mLinePath,false);
-        mBottomPathMeasure.getPosTan(100,pos,tan);
-        pointF1.x=pos[0];
-        pointF1.y=pos[1];
-        mCommonPaint.setColor(Color.RED);
-        canvas.drawCircle(pointF1.x,pointF1.y,10,mCommonPaint);
-        mLinePath.rewind();
-        mLinePath.moveTo(pos[0],pos[1]);
+        mLinePath.reset();
+        mLinePath.moveTo(pointF1.x,pointF1.y);
+        mLinePath.lineTo(pointF4.x,pointF4.y);
+//        canvas.drawCircle(pointF1.x,pointF1.y,10,mCommonPaint);
+//        canvas.drawCircle(pointF4.x,pointF4.y,10,mCommonPaint);
+        mBottomPathMeasure.setPath(mLinePath, false);
+        CircleRadianButton c = (CircleRadianButton) getChildAt(0);
+        mBottomPathMeasure.getPosTan(c.getRadius()+10,pos,tan);
+        PointF pointF5 =new PointF();
+        pointF5.x = pos[0];
+        pointF5.y = pos[1];
+        mLinePath.reset();
+        mLinePath.moveTo(pointF5.x,pointF5.y);
         mLinePath.lineTo(pointF2.x,pointF2.y);
         mLinePath.lineTo(pointF3.x,pointF3.y);
         mCommonPaint.setStyle(Paint.Style.FILL);
         mCommonPaint.setColor(Color.WHITE);
-        Log.i(TAG,"P1-"+pointF1.toString());
-        Log.i(TAG,"P4-"+pointF4.toString());
-        mCommonPaint.setColor(Color.BLUE);
-        canvas.drawCircle(pointF1.x,pointF1.y,10,mCommonPaint);
-        canvas.drawPath(mLinePath,mCommonPaint);
-    }
+        canvas.drawPath(mLinePath,mCommonPaint);}
 
     /**
      * 分发
