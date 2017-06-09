@@ -69,6 +69,7 @@ public class RadianViewPager extends ViewGroup {
     private int currentIndex = 0;
     private int endIndex = 0;
     private float currentPrecent=0f;
+    private OnPagerChangeListener onPagerChangeListener;
     /**
      * 动画未开始状态
      */
@@ -96,10 +97,8 @@ public class RadianViewPager extends ViewGroup {
             super.handleMessage(msg);
             switch (msg.what) {
                 case 0:
-                    Log.i(TAG,"Handler开始 " + translateState );
-                    if (translateState != STATE_START  &&translateState != STATE_MOVING  && currentIndex!=endIndex) {
-                        Log.i(TAG,"startCircleMovingAnimatior");
-                        startCircleMovingAnimatior();
+                    if(onPagerChangeListener!=null){
+                        onPagerChangeListener.pageChanged(currentIndex,endIndex);
                     }
                     break;
                 default:
@@ -118,6 +117,14 @@ public class RadianViewPager extends ViewGroup {
 
     public RadianViewPager(Context context, AttributeSet attrs, int defStyleAttr) {
         this(context, attrs, defStyleAttr, 0);
+    }
+
+    public OnPagerChangeListener getOnPagerChangeListener() {
+        return onPagerChangeListener;
+    }
+
+    public void setOnPagerChangeListener(OnPagerChangeListener onPagerChangeListener) {
+        this.onPagerChangeListener = onPagerChangeListener;
     }
 
     public RadianViewPager(Context context, AttributeSet attrs, int defStyleAttr, int defStyleRes) {
@@ -242,24 +249,35 @@ public class RadianViewPager extends ViewGroup {
     @Override
     protected void onLayout(boolean changed, int l, int t, int r, int b) {
         //todo:只支持一个子View 不是1个view将抛异常
-        List<PointF> pointFs = getChildViewPosInRadian();
-
-        for (int n = 0; n < getChildCount(); n++) {
-            View v = getChildAt(n);
-            PointF p = pointFs.get(n);
-            float centerX = p.x;
-            float centerY = p.y;
-            int w = v.getMeasuredWidth();
-            int h = v.getMeasuredHeight();
+        if(currentPrecent==0) {
+            List<PointF> pointFs = getChildViewPosInRadian();
+                View v = getChildAt(0);
+                PointF p = pointFs.get(0);
+                float centerX = p.x;
+                float centerY = p.y;
+                int w = v.getMeasuredWidth();
+                int h = v.getMeasuredHeight();
 //            MarginLayoutParams mlp = (MarginLayoutParams)getLayoutParams();
-            //这里就不计算margin了
-            int left = (int) (centerX - w / 2f);
-            int top = (int) (centerY - h / 2f);
-            int right = (int) (centerX + w / 2f);
-            int bottom = (int) (centerY + h / 2f);
-            v.layout(left, top, right, bottom);
-            Log.e(TAG, "CHILD onLayout: " + (n + 1) + ",l-" + left + ",t-" + top + ",r-" + right + ",b-" + bottom);
-
+                //这里就不计算margin了
+                int left = (int) (centerX - w / 2f);
+                int top = (int) (centerY - h / 2f);
+                int right = (int) (centerX + w / 2f);
+                int bottom = (int) (centerY + h / 2f);
+                v.layout(left, top, right, bottom);
+                Log.e(TAG, "CHILD onLayout: " +   1 + ",l-" + left + ",t-" + top + ",r-" + right + ",b-" + bottom);
+        }else {
+            CircleRadianButton circleRadianButton = (CircleRadianButton)getChildAt(0);
+            rectF.left = 0;
+            rectF.top = mHeight - mItemRadianTop;
+            rectF.right = mWidth;
+            rectF.bottom = mHeight + mRadianTop;
+            mItemRadianPath.addArc(rectF, -180, 180);
+            mPathMeasure.setPath(mItemRadianPath,false);
+            mPathMeasure.getPosTan(mPathMeasure.getLength() * currentPrecent,pos,tan);
+            circleRadianButton.layout((int)pos[0]-circleRadianButton.getRadius(),
+                    (int)pos[1]-circleRadianButton.getRadius(),
+                    (int)pos[0]+circleRadianButton.getRadius(),
+                    (int)pos[1]+circleRadianButton.getRadius());
         }
     }
 
@@ -385,6 +403,9 @@ public class RadianViewPager extends ViewGroup {
                     endIndex = index;
                     startCircleMoving();
                 }
+                if(onPagerChangeListener!=null){
+                    onPagerChangeListener.pageChanged(currentIndex,endIndex);
+                }
                 Log.e(TAG, "dispatchTouchEvent ACTION_DOWN");
                 break;
             case MotionEvent.ACTION_MOVE:
@@ -493,7 +514,7 @@ public class RadianViewPager extends ViewGroup {
     }
 
     private void startCircleMoving(){
-        handler.sendEmptyMessage(0);
+        startCircleMovingAnimatior();
     }
 
     private void startCircleMovingAnimatior(){
@@ -507,7 +528,7 @@ public class RadianViewPager extends ViewGroup {
         final float sum = mPathMeasure.getLength();
         float length = sum / mSettledItemCount * 1f;
         float currentLength =  length / 2f + length * currentIndex*1f;
-        float endLength =  length / 2f + length * endIndex*1f;
+        final float endLength =  length / 2f + length * endIndex*1f;
         float precent  =  currentLength / sum;
         final float endPrecent =  endLength / sum;
         final View child =  getChildAt(0);
@@ -528,17 +549,22 @@ public class RadianViewPager extends ViewGroup {
                             (int)currentPos[1]-circleRadianButton.getRadius(),
                             (int)currentPos[0]+circleRadianButton.getRadius(),
                             (int)currentPos[1]+circleRadianButton.getRadius());
+                    invalidate();
                 }else{
+                    handler.sendEmptyMessage(0);
                     currentIndex = endIndex;
                     translateState =STATE_STOP;
                 }
-                invalidate();
             }
         });
         translateAnimator.setDuration(1000);
         translateAnimator.setInterpolator(new LinearInterpolator());
         translateAnimator.start();
 
+    }
+
+    public interface OnPagerChangeListener {
+        public void pageChanged(int from,int to);
     }
 
 }
