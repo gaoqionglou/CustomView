@@ -6,6 +6,7 @@ import android.content.res.TypedArray;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.PathMeasure;
@@ -63,12 +64,22 @@ public class RadianViewPager extends ViewGroup {
     float[] tan = new float[2];
     private int mSettledItemCount = 0;
     private String[] settledItemText = {"我的计划", "极速之神"};
-    private int mSettledCircleRadius;
-    private int mSettledCircleColor;
+    private int mItemCircleRadius;
+
+    private List<PointF> childViewPos;
+    private float mSettledCircleRadius;
+    private Drawable mSettledCircleBackground;
+    private int mSettledCircleColor = Color.WHITE;
+    private Bitmap mSettledCircleBitmap;
+    private int mSettledCircleBackgroudResource;
+    private Matrix mMatrix ;
     private Context mContext;
     private int currentIndex = 0;
     private int endIndex = 0;
     private float currentPrecent=0f;
+    private float mDownX,mDownY;
+    private boolean isCanMoving;
+    private int mIndex ;
     private OnPagerChangeListener onPagerChangeListener;
     /**
      * 动画未开始状态
@@ -157,14 +168,19 @@ public class RadianViewPager extends ViewGroup {
                 case R.styleable.RadianViewPager_itemRadianColor:
                     mItemRadianColor = typedArray.getColor(attr, mDefaultColor);
                     break;
-                case R.styleable.RadianViewPager_settledCircleCount:
-                    mSettledItemCount = typedArray.getInteger(attr, 0);
+                case R.styleable.RadianViewPager_settledCircleBackgroud:
+                    mSettledCircleBackgroudResource = typedArray.getResourceId(attr, 0);
+                    if (mSettledCircleBackgroudResource != 0) {
+                        mSettledCircleBackground = mContext.getDrawable(mSettledCircleBackgroudResource);
+                        if (mSettledCircleBackground instanceof ColorDrawable) {
+                            mSettledCircleColor = typedArray.getColor(attr, mDefaultColor);
+                        } else {
+                            mSettledCircleBitmap = drawableToBitmap(mSettledCircleBackground);
+                        }
+                    }
                     break;
                 case R.styleable.RadianViewPager_settledCircleRadius:
-                    mSettledCircleRadius = (int) typedArray.getDimension(attr, 0);
-                    break;
-                case R.styleable.RadianViewPager_settledCircleColor:
-                    mSettledCircleColor = typedArray.getColor(attr, mDefaultColor);
+                    mSettledCircleRadius = typedArray.getDimension(attr, 0);
                     break;
                 default:
                     break;
@@ -172,6 +188,8 @@ public class RadianViewPager extends ViewGroup {
 
         }
         typedArray.recycle();
+        // 为了触发ACTION_MOVE ACTION_UP
+        setClickable(true);
         setWillNotDraw(false);
         init();
     }
@@ -185,6 +203,7 @@ public class RadianViewPager extends ViewGroup {
         mBottomPathMeasure = new PathMeasure();
         mRadianPath = new Path();
         mLinePath = new Path();
+        mMatrix = new Matrix();
     }
 
     @Override
@@ -248,36 +267,24 @@ public class RadianViewPager extends ViewGroup {
 
     @Override
     protected void onLayout(boolean changed, int l, int t, int r, int b) {
-        //todo:只支持一个子View 不是1个view将抛异常
-        if(currentPrecent==0) {
-            List<PointF> pointFs = getChildViewPosInRadian();
-                View v = getChildAt(0);
-                PointF p = pointFs.get(0);
-                float centerX = p.x;
-                float centerY = p.y;
-                int w = v.getMeasuredWidth();
-                int h = v.getMeasuredHeight();
+        for(int i=0;i<getChildCount();i++) {
+            childViewPos = getChildViewPosInRadian();
+            View v  = getChildAt(i);
+            PointF p = childViewPos.get(i);
+            CircleRadianButton circleRadianButton = (CircleRadianButton)v;
+            mItemCircleRadius =  circleRadianButton.getRadius();
+            float centerX = p.x;
+            float centerY = p.y;
+            int w = v.getMeasuredWidth();
+            int h = v.getMeasuredHeight();
 //            MarginLayoutParams mlp = (MarginLayoutParams)getLayoutParams();
-                //这里就不计算margin了
-                int left = (int) (centerX - w / 2f);
-                int top = (int) (centerY - h / 2f);
-                int right = (int) (centerX + w / 2f);
-                int bottom = (int) (centerY + h / 2f);
-                v.layout(left, top, right, bottom);
-                Log.e(TAG, "CHILD onLayout: " +   1 + ",l-" + left + ",t-" + top + ",r-" + right + ",b-" + bottom);
-        }else {
-            CircleRadianButton circleRadianButton = (CircleRadianButton)getChildAt(0);
-            rectF.left = 0;
-            rectF.top = mHeight - mItemRadianTop;
-            rectF.right = mWidth;
-            rectF.bottom = mHeight + mRadianTop;
-            mItemRadianPath.addArc(rectF, -180, 180);
-            mPathMeasure.setPath(mItemRadianPath,false);
-            mPathMeasure.getPosTan(mPathMeasure.getLength() * currentPrecent,pos,tan);
-            circleRadianButton.layout((int)pos[0]-circleRadianButton.getRadius(),
-                    (int)pos[1]-circleRadianButton.getRadius(),
-                    (int)pos[0]+circleRadianButton.getRadius(),
-                    (int)pos[1]+circleRadianButton.getRadius());
+            //这里就不计算margin了
+            int left = (int) (centerX - w / 2f);
+            int top = (int) (centerY - h / 2f);
+            int right = (int) (centerX + w / 2f);
+            int bottom = (int) (centerY + h / 2f);
+            v.layout(left, top, right, bottom);
+//            Log.e(TAG, "CHILD onLayout: " + 1 + ",l-" + left + ",t-" + top + ",r-" + right + ",b-" + bottom);
         }
     }
 
@@ -305,29 +312,72 @@ public class RadianViewPager extends ViewGroup {
         mItemRadianPath.addArc(rectF, -180, 180);
         //画笔描边
         mCommonPaint.setStyle(Paint.Style.STROKE);
-        mCommonPaint.setColor(Color.WHITE);
+        mCommonPaint.setColor(mItemRadianColor);
         mCommonPaint.setStrokeWidth(mItemRadianWidth);
-//        mCommonPaint.setColor(mItemRadianColor);
         canvas.drawPath(mItemRadianPath, mCommonPaint);
-        List<PointF> pointFs = getChildViewPosInRadian();
-        mItemRadianPath.reset();
-        rectF.left = 0;
-        rectF.top = mHeight - mItemRadianTop;
-        rectF.right = mWidth;
-        rectF.bottom = mHeight + mRadianTop;
-        mItemRadianPath.addArc(rectF, -180, 180);
-        canvas.drawPath(mItemRadianPath, mCommonPaint);
-        for (int n = 0; n < mSettledItemCount; n++) {
-            PointF p = pointFs.get(n);
-            mCommonPaint.setStyle(Paint.Style.FILL);
-            mCommonPaint.setColor(mSettledCircleColor);
-            canvas.drawCircle(p.x, p.y, mSettledCircleRadius, mCommonPaint);
-        }
     }
 
     @Override
     protected void dispatchDraw(Canvas canvas) {
         super.dispatchDraw(canvas);
+        if(currentPrecent==0) {
+            PointF currentPos = childViewPos.get(currentIndex);
+            if (mSettledCircleColor == 0 && mSettledCircleBackground != null) {
+                int mBitmapWidth = mBackgroundBitmap.getWidth();
+                int mBitmapHeight = mBackgroundBitmap.getHeight();
+                float scale = 0f;
+                float dx = 0f, dy = 0f;
+                if (mBitmapWidth * mHeight > mWidth * mBitmapHeight) {
+                    //y轴缩放 x轴平移 使得图片的y轴方向的边的尺寸缩放到图片显示区域一样
+                    scale = mHeight / (float) mBitmapHeight;
+                    dx = (mWidth - mBitmapWidth * scale) * 0.5f;
+                } else {
+                    //x轴缩放 y轴平移 使得图片的x轴方向的边的尺寸缩放到图片显示区域一样
+                    scale = mWidth / (float) mBitmapWidth;
+                    dy = (mHeight - mBitmapHeight * scale) * 0.5f;
+                }
+                // 变换矩阵，放大或者缩小。
+                mMatrix.setScale(scale, scale);
+                // 平移
+                mMatrix.postTranslate((int) (dx + 0.5f), (int) (dy + 0.5f));
+                canvas.drawBitmap(mBackgroundBitmap, mMatrix, mCommonPaint);
+            } else {
+                mCommonPaint.setStyle(Paint.Style.FILL);
+                mCommonPaint.setColor(mSettledCircleColor);
+                canvas.drawCircle(currentPos.x, currentPos.y, mSettledCircleRadius, mCommonPaint);
+            }
+
+        }else {
+            float[] currentPos =  getPosInCurrentPrecent(currentPrecent);
+            if (mSettledCircleColor == 0 && mSettledCircleBackground != null) {
+                int mBitmapWidth = mBackgroundBitmap.getWidth();
+                int mBitmapHeight = mBackgroundBitmap.getHeight();
+                float scale = 0f;
+                float dx = 0f, dy = 0f;
+                if (mBitmapWidth * mHeight > mWidth * mBitmapHeight) {
+                    //y轴缩放 x轴平移 使得图片的y轴方向的边的尺寸缩放到图片显示区域一样
+                    scale = mHeight / (float) mBitmapHeight;
+                    dx = (mWidth - mBitmapWidth * scale) * 0.5f;
+                } else {
+                    //x轴缩放 y轴平移 使得图片的x轴方向的边的尺寸缩放到图片显示区域一样
+                    scale = mWidth / (float) mBitmapWidth;
+                    dy = (mHeight - mBitmapHeight * scale) * 0.5f;
+                }
+                // 变换矩阵，放大或者缩小。
+                mMatrix.setScale(scale, scale);
+                // 平移
+                mMatrix.postTranslate((int) (dx + 0.5f), (int) (dy + 0.5f));
+                canvas.drawBitmap(mBackgroundBitmap, mMatrix, mCommonPaint);
+            } else {
+                mCommonPaint.setStyle(Paint.Style.FILL);
+                mCommonPaint.setColor(mSettledCircleColor);
+                canvas.drawCircle(currentPos[0], currentPos[1], mSettledCircleRadius, mCommonPaint);
+            }
+        }
+        drawArrow(canvas);
+    }
+
+    private void drawArrow(Canvas canvas){
         rectF.left = 0;
         rectF.top = mHeight - mItemRadianTop;
         rectF.right = mWidth;
@@ -336,7 +386,7 @@ public class RadianViewPager extends ViewGroup {
         mItemRadianPath.addArc(rectF, -180, 180);
         mBottomPathMeasure.setPath(mItemRadianPath, false);
         float sum = mBottomPathMeasure.getLength();
-        float length = sum / mSettledItemCount * 1f;
+        float length = sum / getChildCount() * 1f;
         float currentLenght =  length / 2f + length * currentIndex;
         if(currentPrecent==0f) currentPrecent = currentLenght/sum;
         mBottomPathMeasure.getPosTan(sum*currentPrecent, pos, tan);
@@ -366,11 +416,9 @@ public class RadianViewPager extends ViewGroup {
         mLinePath.reset();
         mLinePath.moveTo(pointF1.x,pointF1.y);
         mLinePath.lineTo(pointF4.x,pointF4.y);
-//        canvas.drawCircle(pointF1.x,pointF1.y,10,mCommonPaint);
-//        canvas.drawCircle(pointF4.x,pointF4.y,10,mCommonPaint);
         mBottomPathMeasure.setPath(mLinePath, false);
         CircleRadianButton c = (CircleRadianButton) getChildAt(0);
-        mBottomPathMeasure.getPosTan(c.getRadius()+10,pos,tan);
+        mBottomPathMeasure.getPosTan(c.getRadius()+20,pos,tan);
         PointF pointF5 =new PointF();
         pointF5.x = pos[0];
         pointF5.y = pos[1];
@@ -380,7 +428,8 @@ public class RadianViewPager extends ViewGroup {
         mLinePath.lineTo(pointF3.x,pointF3.y);
         mCommonPaint.setStyle(Paint.Style.FILL);
         mCommonPaint.setColor(Color.WHITE);
-        canvas.drawPath(mLinePath,mCommonPaint);}
+        canvas.drawPath(mLinePath,mCommonPaint);
+    }
 
     /**
      * 分发
@@ -395,23 +444,18 @@ public class RadianViewPager extends ViewGroup {
         int a = ev.getAction();
         switch (a) {
             case MotionEvent.ACTION_DOWN:
-                float ex = ev.getX();
-                float ey = ev.getY();
-                int index = isInRange(ex, ey, pointFs, mSettledCircleRadius);
-                Log.i(TAG, "将要去点中的第" + (index + 1) + "个");
-                if (index != -1) {
-                    endIndex = index;
-                    startCircleMoving();
-                }
-                if(onPagerChangeListener!=null){
-                    onPagerChangeListener.pageChanged(currentIndex,endIndex);
-                }
+                isCanMoving = true;
+                mDownX = ev.getX();
+                mDownY = ev.getY();
                 Log.e(TAG, "dispatchTouchEvent ACTION_DOWN");
                 break;
             case MotionEvent.ACTION_MOVE:
                 Log.e(TAG, "dispatchTouchEvent ACTION_MOVE");
                 break;
             case MotionEvent.ACTION_UP:
+                mIndex = isInRange(mDownX, mDownY);
+                Log.i(TAG, "将要去点中的第" + (mIndex + 1) + "个");
+                isCanMoving = mIndex != -1;
                 Log.e(TAG, "dispatchTouchEvent ACTION_UP");
                 break;
         }
@@ -426,7 +470,11 @@ public class RadianViewPager extends ViewGroup {
      */
     @Override
     public boolean onInterceptTouchEvent(MotionEvent ev) {
-        return super.onInterceptTouchEvent(ev);
+        if(translateState == STATE_MOVING){
+            Log.i(TAG,"发现正在滑动的,调用父类的方法分发掉该事件,不再拦截");
+            return false;
+        }
+        return true;
     }
 
     /**
@@ -437,6 +485,11 @@ public class RadianViewPager extends ViewGroup {
      */
     @Override
     public boolean onTouchEvent(MotionEvent event) {
+        Log.e(TAG,"onTouchEvent");
+        if (mIndex != -1&&currentPrecent!=mIndex) {
+            endIndex = mIndex;
+            startCircleMoving();
+        }
         return super.onTouchEvent(event);
     }
 
@@ -446,7 +499,6 @@ public class RadianViewPager extends ViewGroup {
                 drawable.getIntrinsicHeight(),
                 drawable.getOpacity() != PixelFormat.OPAQUE ? Bitmap.Config.ARGB_8888 : Bitmap.Config.RGB_565);
         Canvas canvas = new Canvas(bitmap);
-        //canvas.setBitmap(bitmap);
         drawable.setBounds(0, 0, drawable.getIntrinsicWidth(), drawable.getIntrinsicHeight());
         drawable.draw(canvas);
         return bitmap;
@@ -462,8 +514,8 @@ public class RadianViewPager extends ViewGroup {
         mItemRadianPath.addArc(rectF, -180, 180);
         mPathMeasure.setPath(mItemRadianPath, false);
         float sum = mPathMeasure.getLength();
-        float length = sum / mSettledItemCount * 1f;
-        for (int i = 0; i < mSettledItemCount; i++) {
+        float length = sum / getChildCount() * 1f;
+        for (int i = 0; i < getChildCount(); i++) {
             mPathMeasure.getPosTan(length / 2f + length * i, pos, tan);
             PointF pointF = new PointF();
             pointF.x = pos[0];
@@ -476,20 +528,38 @@ public class RadianViewPager extends ViewGroup {
     /**
      * 检查是否在所在区域中，并返回所在index
      *
-     * @param targetX
-     * @param targetY
-     * @param centerPoints
-     * @param mSettledCircleRadius
+     * @param downX
+     * @param downY
      * @return
      */
-    private int isInRange(float targetX, float targetY, List<PointF> centerPoints, int mSettledCircleRadius) {
-        int index = -1;
-        for (PointF pointF : centerPoints) {
-            if (isInRange(targetX, targetY, pointF, mSettledCircleRadius)) {
-                return centerPoints.indexOf(pointF);
+    private int isInRange(float downX, float downY) {
+        for (int i = 0; i < getChildCount(); i++) {
+            View childView = getChildAt(i);
+            int top = childView.getTop();
+            int bottom = childView.getBottom();
+            int left = childView.getLeft();
+            int right = childView.getRight();
+            boolean inWidth = downX >= left && downX <= right;
+            boolean inHeight = downY >= top && downY <= bottom;
+            boolean isInChildView = inWidth && inHeight;
+            if (isInChildView) {
+                return i;
             }
         }
-        return index;
+        return -1;
+    }
+
+    private float[] getPosInCurrentPrecent(float currentPrecent){
+        rectF.left = 0;
+        rectF.top = mHeight - mItemRadianTop;
+        rectF.right = mWidth;
+        rectF.bottom = mHeight + mRadianTop;
+        mItemRadianPath.reset();
+        mItemRadianPath.addArc(rectF, -180, 180);
+        mPathMeasure.setPath(mItemRadianPath, false);
+        float sum = mPathMeasure.getLength();
+        mPathMeasure.getPosTan(sum * currentPrecent, pos, tan);
+        return pos;
     }
 
     /**
@@ -518,6 +588,7 @@ public class RadianViewPager extends ViewGroup {
     }
 
     private void startCircleMovingAnimatior(){
+        translateState = STATE_START;
         rectF.left = 0;
         rectF.top = mHeight - mItemRadianTop;
         rectF.right = mWidth;
@@ -526,13 +597,11 @@ public class RadianViewPager extends ViewGroup {
         mItemRadianPath.addArc(rectF, -180, 180);
         mPathMeasure.setPath(mItemRadianPath, false);
         final float sum = mPathMeasure.getLength();
-        float length = sum / mSettledItemCount * 1f;
+        float length = sum / getChildCount() * 1f;
         float currentLength =  length / 2f + length * currentIndex*1f;
         final float endLength =  length / 2f + length * endIndex*1f;
         float precent  =  currentLength / sum;
         final float endPrecent =  endLength / sum;
-        final View child =  getChildAt(0);
-
         ValueAnimator translateAnimator = ValueAnimator.ofFloat(precent,endPrecent);
         translateAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
             @Override
@@ -541,17 +610,13 @@ public class RadianViewPager extends ViewGroup {
                 float currentPos[] = new float[2];
                 float currentTan[] = new float[2];
                 mPathMeasure.getPosTan(sum*currentPrecent, currentPos, currentTan);
-                Log.e(TAG,"startTranslateAnimatior precent "+currentPrecent);
                 if(currentPrecent!=endPrecent){
                     translateState  = STATE_MOVING;
-                    CircleRadianButton circleRadianButton = (CircleRadianButton)child;
-                    child.layout((int)currentPos[0]-circleRadianButton.getRadius(),
-                            (int)currentPos[1]-circleRadianButton.getRadius(),
-                            (int)currentPos[0]+circleRadianButton.getRadius(),
-                            (int)currentPos[1]+circleRadianButton.getRadius());
                     invalidate();
                 }else{
-                    handler.sendEmptyMessage(0);
+                    if(onPagerChangeListener!=null){
+                        onPagerChangeListener.pageChanged(currentIndex,endIndex);
+                    }
                     currentIndex = endIndex;
                     translateState =STATE_STOP;
                 }
