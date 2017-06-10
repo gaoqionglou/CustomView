@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:radianViewPager="http://schemas.android.com/apk/res-auto"
-    xmlns:circleRadianButton="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -9,25 +8,48 @@
     tools:context="com.gaoql.MagicActivity">
 
     <com.gaoql.customview.RadianViewPager
+        android:id="@+id/vp"
+        xmlns:circleRadianButton="http://schemas.android.com/apk/res-auto"
         android:layout_width="match_parent"
         android:layout_height="100dp"
         android:background="#969696"
-        radianViewPager:itemRadianColor="@color/colorPrimary"
+        radianViewPager:itemRadianColor="#ffffff"
         radianViewPager:itemRadianTop="60dp"
         radianViewPager:itemRadianWidth="5sp"
         radianViewPager:radianTop="25dp"
-        radianViewPager:settledCircleCount="2"
-        radianViewPager:settledCircleRadius="10dp"
-        radianViewPager:settledCircleColor="@color/colorAccent"
+        radianViewPager:settledCircleRadius="25dp"
+        radianViewPager:settledCircleBackgroud = "@color/colorPrimaryDark"
         >
 
         <com.gaoql.customview.CircleRadianButton
             android:id="@+id/btn1"
             android:layout_width="50dp"
             android:layout_height="50dp"
-            circleRadianButton:crbackground="@color/colorPrimary" />
+            circleRadianButton:radius="20dp"
+            circleRadianButton:crbackground="@color/colorAccent" />
+
+        <com.gaoql.customview.CircleRadianButton
+            android:id="@+id/btn2"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            circleRadianButton:radius="20dp"
+            circleRadianButton:crbackground="@color/colorAccent" />
 
 
     </com.gaoql.customview.RadianViewPager>
 
+    <RelativeLayout
+        android:id="@+id/content"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentStart="true">
+        <android.support.v7.widget.RecyclerView
+            android:id="@+id/rv"
+            android:layout_centerInParent="true"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content">
+        </android.support.v7.widget.RecyclerView>
+
+    </RelativeLayout>
 </RelativeLayout>
