@@ -56,6 +56,7 @@ public class RadianViewPager extends ViewGroup {
     private Paint mCommonPaint;
     private Paint mTextPaint;
     private RectF rectF;
+    private RectF mDrawableRect;
     private PathMeasure mPathMeasure;
     private PathMeasure mBottomPathMeasure;
     // 当前点的实际位置
@@ -69,7 +70,7 @@ public class RadianViewPager extends ViewGroup {
     private List<PointF> childViewPos;
     private float mSettledCircleRadius;
     private Drawable mSettledCircleBackground;
-    private int mSettledCircleColor = Color.WHITE;
+    private int mSettledCircleColor = 0;
     private Bitmap mSettledCircleBitmap;
     private int mSettledCircleBackgroudResource;
     private Matrix mMatrix ;
@@ -198,6 +199,7 @@ public class RadianViewPager extends ViewGroup {
         mCommonPaint = new Paint();
         mTextPaint = new Paint();
         rectF = new RectF();
+        mDrawableRect = new RectF();
         mItemRadianPath = new Path();
         mPathMeasure = new PathMeasure();
         mBottomPathMeasure = new PathMeasure();
@@ -320,27 +322,47 @@ public class RadianViewPager extends ViewGroup {
     @Override
     protected void dispatchDraw(Canvas canvas) {
         super.dispatchDraw(canvas);
+        mMatrix.reset();
+        rectF.left = 0;
+        rectF.top = mHeight - mItemRadianTop;
+        rectF.right = mWidth;
+        rectF.bottom = mHeight + mRadianTop;
+        mItemRadianPath.addArc(rectF, -180, 180);
+        mPathMeasure.setPath(mItemRadianPath,false);
+        if(currentPrecent==0){
+            float sum = mPathMeasure.getLength();
+            float length = sum / getChildCount() * 1f;
+            mPathMeasure.getPosTan(length / 2f + length * currentIndex, pos, tan);
+        }else {
+            mPathMeasure.getPosTan(mPathMeasure.getLength() * currentPrecent,pos,tan);
+        }
+        mDrawableRect.set((int)pos[0]-mSettledCircleRadius,
+                (int)pos[1]-mSettledCircleRadius,
+                (int)pos[0]+mSettledCircleRadius,
+                (int)pos[1]+mSettledCircleRadius);
+        int drawableHeight = (int)mDrawableRect.height();
+        int drawableWidth = (int)mDrawableRect.width();
         if(currentPrecent==0) {
             PointF currentPos = childViewPos.get(currentIndex);
             if (mSettledCircleColor == 0 && mSettledCircleBackground != null) {
-                int mBitmapWidth = mBackgroundBitmap.getWidth();
-                int mBitmapHeight = mBackgroundBitmap.getHeight();
+                int mBitmapWidth = mSettledCircleBitmap.getWidth();
+                int mBitmapHeight = mSettledCircleBitmap.getHeight();
                 float scale = 0f;
                 float dx = 0f, dy = 0f;
-                if (mBitmapWidth * mHeight > mWidth * mBitmapHeight) {
+                if (mBitmapWidth * drawableHeight > drawableWidth * mBitmapHeight) {
                     //y轴缩放 x轴平移 使得图片的y轴方向的边的尺寸缩放到图片显示区域一样
-                    scale = mHeight / (float) mBitmapHeight;
-                    dx = (mWidth - mBitmapWidth * scale) * 0.5f;
+                    scale = drawableHeight / (float) mBitmapHeight;
                 } else {
                     //x轴缩放 y轴平移 使得图片的x轴方向的边的尺寸缩放到图片显示区域一样
-                    scale = mWidth / (float) mBitmapWidth;
-                    dy = (mHeight - mBitmapHeight * scale) * 0.5f;
+                    scale = drawableWidth / (float) mBitmapWidth;
                 }
+                dx = mDrawableRect.right - mBitmapWidth ;
+                dy = mDrawableRect.bottom - mBitmapHeight;
                 // 变换矩阵，放大或者缩小。
                 mMatrix.setScale(scale, scale);
                 // 平移
-                mMatrix.postTranslate((int) (dx + 0.5f), (int) (dy + 0.5f));
-                canvas.drawBitmap(mBackgroundBitmap, mMatrix, mCommonPaint);
+                mMatrix.postTranslate((int) dx, (int) dy);
+                canvas.drawBitmap(mSettledCircleBitmap, mMatrix, mCommonPaint);
             } else {
                 mCommonPaint.setStyle(Paint.Style.FILL);
                 mCommonPaint.setColor(mSettledCircleColor);
@@ -350,24 +372,24 @@ public class RadianViewPager extends ViewGroup {
         }else {
             float[] currentPos =  getPosInCurrentPrecent(currentPrecent);
             if (mSettledCircleColor == 0 && mSettledCircleBackground != null) {
-                int mBitmapWidth = mBackgroundBitmap.getWidth();
-                int mBitmapHeight = mBackgroundBitmap.getHeight();
+                int mBitmapWidth = mSettledCircleBitmap.getWidth();
+                int mBitmapHeight = mSettledCircleBitmap.getHeight();
                 float scale = 0f;
                 float dx = 0f, dy = 0f;
-                if (mBitmapWidth * mHeight > mWidth * mBitmapHeight) {
+                if (mBitmapWidth * drawableHeight > drawableWidth * mBitmapHeight) {
                     //y轴缩放 x轴平移 使得图片的y轴方向的边的尺寸缩放到图片显示区域一样
-                    scale = mHeight / (float) mBitmapHeight;
-                    dx = (mWidth - mBitmapWidth * scale) * 0.5f;
+                    scale = drawableHeight / (float) mBitmapHeight;
                 } else {
                     //x轴缩放 y轴平移 使得图片的x轴方向的边的尺寸缩放到图片显示区域一样
-                    scale = mWidth / (float) mBitmapWidth;
-                    dy = (mHeight - mBitmapHeight * scale) * 0.5f;
+                    scale = drawableWidth / (float) mBitmapWidth;
                 }
+                dx = mDrawableRect.right - mBitmapWidth ;
+                dy = mDrawableRect.bottom - mBitmapHeight;
                 // 变换矩阵，放大或者缩小。
                 mMatrix.setScale(scale, scale);
                 // 平移
-                mMatrix.postTranslate((int) (dx + 0.5f), (int) (dy + 0.5f));
-                canvas.drawBitmap(mBackgroundBitmap, mMatrix, mCommonPaint);
+                mMatrix.postTranslate((int)dx, (int) dy);
+                canvas.drawBitmap(mSettledCircleBitmap, mMatrix, mCommonPaint);
             } else {
                 mCommonPaint.setStyle(Paint.Style.FILL);
                 mCommonPaint.setColor(mSettledCircleColor);
