@@ -48,15 +48,22 @@
         <attr name="itemRadianTop" format="dimension"/>
         <attr name="itemRadianWidth" format="dimension"/>
         <attr name="itemRadianColor" format="color"/>
+        <attr name="itemCircleRadius" format="color"/>
         <attr name="settledCircleCount" format="integer"/>
         <attr name="settledCircleText" format="string"/>
         <attr name="settledCircleRadius" format="dimension"/>
-        <attr name="settledCircleColor" format="color"/>
+        <attr name="settledCircleBackgroud" format="color|reference"/>
     </declare-styleable>
     <declare-styleable name="CircleRadianButton">
         <attr name="android:layout_margin"/>
         <attr name="android:padding"/>
         <attr name="crbackground" format="color|reference"/>
         <attr name="radius"/>
+    </declare-styleable>
+    <declare-styleable name="CustomRelativeLauout">
+        <attr name="circleMargin" format="dimension"/>
+        <attr name="circleWidth" format="dimension"/>
+        <attr name="circleColor" format="color"/>
+        <attr name="circleDrawable" format="reference"/>
     </declare-styleable>
 </resources>
