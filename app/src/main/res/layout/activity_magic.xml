@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:radianViewPager="http://schemas.android.com/apk/res-auto"
+    xmlns:customRelativeLauout="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -18,7 +19,7 @@
         radianViewPager:itemRadianWidth="5sp"
         radianViewPager:radianTop="25dp"
         radianViewPager:settledCircleRadius="25dp"
-        radianViewPager:settledCircleBackgroud = "@color/colorPrimaryDark"
+        radianViewPager:settledCircleBackgroud = "@drawable/bol_blue"
         >
 
         <com.gaoql.customview.CircleRadianButton
@@ -38,10 +39,14 @@
 
     </com.gaoql.customview.RadianViewPager>
 
-    <RelativeLayout
+    <com.gaoql.customview.CustomRelativeLauout
         android:id="@+id/content"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        customRelativeLauout:circleMargin="10dp"
+        customRelativeLauout:circleWidth="5dp"
+        customRelativeLauout:circleColor="#969696"
+        customRelativeLauout:circleDrawable="@mipmap/ic_flight"
         android:layout_alignParentBottom="true"
         android:layout_alignParentStart="true">
         <android.support.v7.widget.RecyclerView
@@ -51,5 +56,5 @@
             android:layout_height="wrap_content">
         </android.support.v7.widget.RecyclerView>
 
-    </RelativeLayout>
+    </com.gaoql.customview.CustomRelativeLauout>
 </RelativeLayout>
