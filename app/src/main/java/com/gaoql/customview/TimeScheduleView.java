@@ -24,7 +24,8 @@ import android.view.animation.LinearInterpolator;
 import com.gaoql.R;
 
 /**
- * Created by Administrator on 2017/5/15.
+ * @author  gql
+ * @since 2017/5/15.
  */
 
 public class TimeScheduleView extends View {
