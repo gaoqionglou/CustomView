@@ -1,16 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:radianViewPager="http://schemas.android.com/apk/res-auto"
     xmlns:customRelativeLauout="http://schemas.android.com/apk/res-auto"
+    xmlns:radianViewPager="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:fitsSystemWindows="true"
     tools:context="com.gaoql.MagicActivity">
 
-    <com.gaoql.customview.RadianViewPager
+    <com.gaoql.customview.RadianViewPager xmlns:circleRadianButton="http://schemas.android.com/apk/res-auto"
         android:id="@+id/vp"
-        xmlns:circleRadianButton="http://schemas.android.com/apk/res-auto"
         android:layout_width="match_parent"
         android:layout_height="100dp"
         android:background="#969696"
@@ -18,43 +17,88 @@
         radianViewPager:itemRadianTop="60dp"
         radianViewPager:itemRadianWidth="5sp"
         radianViewPager:radianTop="25dp"
-        radianViewPager:settledCircleRadius="25dp"
-        radianViewPager:settledCircleBackgroud = "@drawable/bol_blue"
-        >
+        radianViewPager:settledCircleBackgroud="@drawable/bol_blue"
+        radianViewPager:settledCircleRadius="25dp">
 
         <com.gaoql.customview.CircleRadianButton
             android:id="@+id/btn1"
             android:layout_width="50dp"
             android:layout_height="50dp"
-            circleRadianButton:radius="20dp"
-            circleRadianButton:crbackground="@color/colorAccent" />
+            circleRadianButton:crbackground="@color/colorAccent"
+            circleRadianButton:radius="20dp" />
 
         <com.gaoql.customview.CircleRadianButton
             android:id="@+id/btn2"
             android:layout_width="50dp"
             android:layout_height="50dp"
-            circleRadianButton:radius="20dp"
-            circleRadianButton:crbackground="@color/colorAccent" />
+            circleRadianButton:crbackground="@color/colorAccent"
+            circleRadianButton:radius="20dp" />
 
 
     </com.gaoql.customview.RadianViewPager>
 
     <com.gaoql.customview.CustomRelativeLauout
-        android:id="@+id/content"
+        android:id="@+id/crl"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        customRelativeLauout:circleMargin="10dp"
-        customRelativeLauout:circleWidth="5dp"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentStart="true"
         customRelativeLauout:circleColor="#969696"
         customRelativeLauout:circleDrawable="@mipmap/ic_flight"
-        android:layout_alignParentBottom="true"
-        android:layout_alignParentStart="true">
-        <android.support.v7.widget.RecyclerView
-            android:id="@+id/rv"
+        customRelativeLauout:circleMargin="10dp"
+        customRelativeLauout:circleWidth="5dp">
+
+        <TableLayout
+            android:id="@+id/tb"
+            android:layout_width="200dp"
+            android:layout_height="200dp"
             android:layout_centerInParent="true"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content">
-        </android.support.v7.widget.RecyclerView>
+            android:background="#E3E3E3">
+
+            <TableRow
+                android:layout_weight="1"
+                android:padding="20dp">
+
+                <ImageView
+                    android:onClick="startAnimation"
+                    android:id="@+id/iv1"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:gravity="center"
+                    android:src="@mipmap/ic_fire" />
+
+                <ImageView
+                    android:id="@+id/iv2"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:gravity="center"
+                    android:src="@mipmap/ic_flower" />
+
+            </TableRow>
+
+            <TableRow
+                android:layout_weight="1"
+                android:padding="20dp">
+
+                <ImageView
+                    android:id="@+id/iv3"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:src="@mipmap/ic_heart" />
+
+                <ImageView
+                    android:id="@+id/iv4"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:src="@mipmap/ic_smile" />
+
+            </TableRow>
+
+        </TableLayout>
 
     </com.gaoql.customview.CustomRelativeLauout>
 </RelativeLayout>
