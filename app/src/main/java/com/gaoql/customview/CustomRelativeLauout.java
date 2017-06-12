@@ -1,5 +1,6 @@
 package com.gaoql.customview;
 
+import android.animation.ValueAnimator;
 import android.content.Context;
 import android.content.res.TypedArray;
 import android.graphics.Bitmap;
@@ -13,7 +14,9 @@ import android.graphics.RectF;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.View;
+import android.view.animation.LinearInterpolator;
 import android.widget.RelativeLayout;
 
 import com.gaoql.R;
@@ -38,23 +41,34 @@ public class CustomRelativeLauout extends RelativeLayout {
     private PathMeasure mPathMeasure;
     private Matrix mMatrix;
     private float[] pos = new float[2];
+    private float[] pos_moving = new float[2];
     private float[] tan = new float[2];
     private float startAngle=0f;
     private float currentSweepAngle=90f;
+    private float currentPrecent;
     public CustomRelativeLauout(Context context) {
-        this(context,null);
+        super(context);
     }
 
     public CustomRelativeLauout(Context context, AttributeSet attrs) {
-        this(context, attrs,0);
+        super(context, attrs);
+        getAttr(context,attrs);
+        init();
     }
 
     public CustomRelativeLauout(Context context, AttributeSet attrs, int defStyleAttr) {
-        this(context, attrs, defStyleAttr,0);
+        super(context, attrs, defStyleAttr,defStyleAttr);
+        getAttr(context,attrs);
+        init();
     }
 
     public CustomRelativeLauout(Context context, AttributeSet attrs, int defStyleAttr, int defStyleRes) {
         super(context, attrs, defStyleAttr, defStyleRes);
+        getAttr(context,attrs);
+        init();
+    }
+
+    private void getAttr(Context context,AttributeSet attrs){
         TypedArray typedArray = context.obtainStyledAttributes(attrs, R.styleable.CustomRelativeLauout);
         for(int i=0;i<typedArray.getIndexCount();i++){
             int attr = typedArray.getIndex(i);
@@ -76,7 +90,6 @@ public class CustomRelativeLauout extends RelativeLayout {
             }
         }
         typedArray.recycle();
-        init();
     }
 
     private void init(){
@@ -100,27 +113,22 @@ public class CustomRelativeLauout extends RelativeLayout {
     protected void dispatchDraw(Canvas canvas) {
         super.dispatchDraw(canvas);
         View v = getChildAt(0);
-        int radius = Math.max(v.getHeight(),v.getWidth())/2+mCircleMargin;
-        canvas.translate(mWidth / 2, mHeight / 2);
+        int radius = (int)Math.sqrt(Math.pow(v.getWidth(),2)+Math.pow(v.getHeight(),2))/2+mCircleMargin;
         mCriclePaint.setStyle(Paint.Style.STROKE);
         mCriclePaint.setColor(mCircleColor);
         mCriclePaint.setStrokeWidth(mCircleWidth);
-        canvas.drawCircle(0, 0, radius, mCriclePaint);
-        rectF.left = -radius;
-        rectF.top = -radius;
-        rectF.right = radius;
-        rectF.bottom = radius;
-        mPath.addArc(rectF, startAngle, currentSweepAngle);
+        canvas.drawCircle(mWidth / 2, mHeight / 2, radius, mCriclePaint);
         //旋转90°纠正起点,原因是mImagePath.addCircle,起始位置不是在（0，-r）而是在(r,0)
-        canvas.rotate(-90);
+//        canvas.rotate(-90);
         mImagePath.reset();
-        mImagePath.addCircle(0, 0, radius, Path.Direction.CW);
+        mImagePath.addCircle(mWidth / 2, mHeight / 2, radius, Path.Direction.CW);
         mPathMeasure.setPath(mImagePath, false);
-        mPathMeasure.getPosTan(mPathMeasure.getLength() * 50 , pos, tan);
+        mPathMeasure.getPosTan(mPathMeasure.getLength()*currentPrecent  , pos_moving, tan);
+        Log.i("CRL",pos_moving[0]+","+pos_moving[1]);
         mMatrix.reset();
         float degrees = (float) (Math.atan2(tan[1], tan[0]) * 180.0 / Math.PI);//计算图片的旋转角度，再矩阵变化
         mMatrix.postRotate(degrees, mCircleBitmap.getWidth() / 2, mCircleBitmap.getHeight() / 2);
-        mMatrix.postTranslate(pos[0] - mCircleBitmap.getWidth() / 2, pos[1] - mCircleBitmap.getHeight() / 2);
+        mMatrix.postTranslate(pos_moving[0] - mCircleBitmap.getWidth() / 2, pos_moving[1] - mCircleBitmap.getHeight() / 2);
         canvas.drawBitmap(mCircleBitmap, mMatrix, mImagePaint);
     }
 
@@ -133,5 +141,19 @@ public class CustomRelativeLauout extends RelativeLayout {
         drawable.setBounds(0, 0, drawable.getIntrinsicWidth(), drawable.getIntrinsicHeight());
         drawable.draw(canvas);
         return bitmap;
+    }
+
+    public void rotate(){
+        ValueAnimator valueAnimator = ValueAnimator.ofFloat(0, 1);
+        valueAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+            @Override
+            public void onAnimationUpdate(ValueAnimator animation) {
+                    currentPrecent = (float) animation.getAnimatedValue();
+                    invalidate();
+            }
+        });
+        valueAnimator.setDuration(5000);
+        valueAnimator.setInterpolator(new LinearInterpolator());
+        valueAnimator.start();
     }
 }
