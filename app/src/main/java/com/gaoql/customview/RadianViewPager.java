@@ -54,7 +54,6 @@ public class RadianViewPager extends ViewGroup {
     private int mDefaultColor = Color.WHITE;
 
     private Paint mCommonPaint;
-    private Paint mTextPaint;
     private RectF rectF;
     private RectF mDrawableRect;
     private PathMeasure mPathMeasure;
@@ -103,22 +102,6 @@ public class RadianViewPager extends ViewGroup {
      */
     private int translateState = STATE_UNSTART;
 
-    private Handler handler = new Handler() {
-        @Override
-        public void handleMessage(Message msg) {
-            super.handleMessage(msg);
-            switch (msg.what) {
-                case 0:
-                    if(onPagerChangeListener!=null){
-                        onPagerChangeListener.pageChanged(currentIndex,endIndex);
-                    }
-                    break;
-                default:
-                    break;
-            }
-
-        }
-    };
     public RadianViewPager(Context context) {
         this(context, null);
     }
@@ -197,7 +180,6 @@ public class RadianViewPager extends ViewGroup {
 
     private void init() {
         mCommonPaint = new Paint();
-        mTextPaint = new Paint();
         rectF = new RectF();
         mDrawableRect = new RectF();
         mItemRadianPath = new Path();
@@ -637,7 +619,7 @@ public class RadianViewPager extends ViewGroup {
                     invalidate();
                 }else{
                     if(onPagerChangeListener!=null){
-                        onPagerChangeListener.pageChanged(currentIndex,endIndex);
+                        onPagerChangeListener.pageChanged(currentIndex,endIndex,currentPos[0],currentPos[1]);
                     }
                     currentIndex = endIndex;
                     translateState =STATE_STOP;
@@ -651,7 +633,7 @@ public class RadianViewPager extends ViewGroup {
     }
 
     public interface OnPagerChangeListener {
-        public void pageChanged(int from,int to);
+        public void pageChanged(int from,int to,float endX,float endY);
     }
 
 }
